@@ -171,7 +171,7 @@ def update_xrefs(path_list, all_ids):
 
             # Extract the information from the matching ID record:
             target_id = matches[0]
-            entry = all_ids[target_id]
+            entry     = all_ids[target_id]
             topic_id  = entry['topic_id']
             filepath  = str(entry['filepath'])
 
