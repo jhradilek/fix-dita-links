@@ -123,7 +123,7 @@ def find_matches(identifier, id_list, suffix=''):
     # Process each ID:
     for i in id_list:
         # Check if the ID matches the identifier:
-        if identifier.startswith(i + suffix):
+        if identifier == i or identifier.startswith(i + suffix):
             result.append(i)
 
     # Return the result:
