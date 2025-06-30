@@ -129,6 +129,21 @@ def find_matches(identifier, id_list, suffix=''):
     # Return the result:
     return result
 
+# Return a valid DITA reference:
+def compose_reference(target_id, all_ids):
+        # Extract the information from the matching ID record:
+        entry     = all_ids[target_id]
+        topic_id  = entry['topic_id']
+        filepath  = str(entry['filepath'])
+
+        # Check if the target ID is a topic ID:
+        if topic_id == target_id:
+            # Return the simple reference:
+            return f'{filepath}#{topic_id}'
+
+        # Return the full reference:
+        return f'{filepath}#{topic_id}/{target_id}'
+
 # Find all cross references that use and ID as the target and update them:
 def update_xrefs(path_list, all_ids):
     # Process each file:
@@ -161,28 +176,16 @@ def update_xrefs(path_list, all_ids):
 
             # Check if any matching IDs have been found:
             if not (matches := find_matches(href, all_ids, '_')):
-                warn(f'ID not found: {href}')
+                warn(f'{path}: ID not found: {href}')
                 continue
 
             # Check if only one matching ID has been found:
             if len(matches) > 1:
-                warn(f'Multiple matching IDs for {href}: {ids}')
+                warn(f'{path}: Multiple matching IDs for {href}: {ids}')
                 continue
 
-            # Extract the information from the matching ID record:
-            target_id = matches[0]
-            entry     = all_ids[target_id]
-            topic_id  = entry['topic_id']
-            filepath  = str(entry['filepath'])
-
-            # Check if the target ID is a topic ID:
-            if topic_id == target_id:
-                target = f'{filepath}#{topic_id}'
-            else:
-                target = f'{filepath}#{topic_id}/{target_id}'
-
             # Update the target ID:
-            e.attrib['href'] = target
+            e.attrib['href'] = compose_reference(matches[0], all_ids)
 
             # Mark the file as updated:
             updated = True
