@@ -30,7 +30,7 @@ from pathlib import Path
 # Print a message to standard error output:
 def warn(error_message):
     # Print the supplied message to standard error output:
-    print(f'dita-xref-repair: {error_message}', file=sys.stderr)
+    print(f'fix-dita-links: {error_message}', file=sys.stderr)
 
 # Return a list of all paths to DITA files in the selected directory and
 # all of its subdirectories:
