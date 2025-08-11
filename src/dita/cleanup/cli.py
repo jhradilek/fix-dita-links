@@ -1,0 +1,128 @@
+# Copyright (C) 2025 Jaromir Hradilek
+
+# MIT License
+#
+# Permission  is hereby granted,  free of charge,  to any person  obtaining
+# a copy of  this software  and associated documentation files  (the "Soft-
+# ware"),  to deal in the Software  without restriction,  including without
+# limitation the rights to use,  copy, modify, merge,  publish, distribute,
+# sublicense, and/or sell copies of the Software,  and to permit persons to
+# whom the Software is furnished to do so,  subject to the following condi-
+# tions:
+#
+# The above copyright notice  and this permission notice  shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS",  WITHOUT WARRANTY OF ANY KIND,  EXPRESS
+# OR IMPLIED,  INCLUDING BUT NOT LIMITED TO  THE WARRANTIES OF MERCHANTABI-
+# LITY,  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT
+# SHALL THE AUTHORS OR COPYRIGHT HOLDERS  BE LIABLE FOR ANY CLAIM,  DAMAGES
+# OR OTHER LIABILITY,  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM,  OUT OF OR IN CONNECTION WITH  THE SOFTWARE  OR  THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+
+import argparse
+import errno
+import sys
+import os
+
+from lxml import etree
+from . import NAME, VERSION, DESCRIPTION
+from .xml import update_image_paths, prune_ids, prune_includes
+
+def exit_with_error(error_message: str, exit_status: int = errno.EPERM) -> None:
+    print(f'{NAME}: {error_message}', file=sys.stderr)
+    sys.exit(exit_status)
+
+def warn(error_message: str) -> None:
+    print(f'{NAME}: {error_message}', file=sys.stderr)
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(prog=NAME,
+        description=DESCRIPTION,
+        add_help=False)
+
+    parser._optionals.title = 'Options'
+    parser._positionals.title = 'Arguments'
+
+    # file prefix
+
+    parser.add_argument('-D', '--images-dir',
+        default=False,
+        help='add a directory path to all image targets')
+    parser.add_argument('-i', '--prune-ids',
+        default=False,
+        action='store_true',
+        help='remove invalid content from element ids')
+    parser.add_argument('-I', '--prune-includes',
+        default=False,
+        action='store_true',
+        help='remove unresolved include statements')
+
+    out = parser.add_mutually_exclusive_group()
+    out.add_argument('-o', '--output',
+        default=False,
+        metavar='FILE',
+        help='write output to the selected file instead of overwriting the file')
+
+    info = parser.add_mutually_exclusive_group()
+    info.add_argument('-h', '--help',
+        action='help',
+        help='display this help and exit')
+    info.add_argument('-v', '--version',
+        action='version',
+        version=f'{NAME} {VERSION}',
+        help='display version information and exit')
+
+    parser.add_argument('files', metavar='FILE',
+        default='-',
+        nargs='*',
+        help='specify the DITA files to clean up')
+
+    args = parser.parse_args(argv)
+
+    if args.files == '-':
+        args.files = [sys.stdin]
+        args.output = sys.stdout
+    if args.output == '-':
+        args.output = sys.stdout
+
+    return args
+
+def process_files(args: argparse.Namespace) -> int:
+    exit_code = 0
+
+    for file_path in args.files:
+        try:
+            xml = etree.parse(file_path)
+        except (etree.XMLSyntaxError, OSError) as message:
+            warn(str(message))
+            exit_code = errno.EPERM
+            continue
+
+        updated = False
+
+        if args.images_dir and update_image_paths(xml, args.images_dir.strip()):
+            updated = True
+
+        if args.prune_ids and prune_ids(xml):
+            updated = True
+
+        if args.prune_includes and prune_includes(xml):
+            updated = True
+
+        if args.output == sys.stdout:
+            sys.stdout.write(etree.tostring(xml, encoding='unicode'))
+
+    return exit_code
+
+def run(argv: list[str] | None = None) -> None:
+    try:
+        args = parse_args(argv)
+        exit_code = process_files(args)
+    except KeyboardInterrupt:
+        sys.exit(130)
+
+    sys.exit(exit_code)
+
+
