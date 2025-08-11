@@ -45,8 +45,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser._optionals.title = 'Options'
     parser._positionals.title = 'Arguments'
 
-    # file prefix
-
     parser.add_argument('-D', '--images-dir',
         default=False,
         help='add a directory path to all image targets')
@@ -113,6 +111,17 @@ def process_files(args: argparse.Namespace) -> int:
 
         if args.output == sys.stdout:
             sys.stdout.write(etree.tostring(xml, encoding='unicode'))
+            continue
+
+        if not updated:
+            continue
+
+        try:
+            xml.write(file_path)
+        except OSError as message:
+            warn(str(message))
+            exit_code = errno.EPERM
+            continue
 
     return exit_code
 
