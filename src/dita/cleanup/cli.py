@@ -141,5 +141,3 @@ def run(argv: list[str] | None = None) -> None:
         sys.exit(130)
 
     sys.exit(exit_code)
-
-

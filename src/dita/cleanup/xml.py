@@ -84,16 +84,14 @@ def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
     adoc_attribute = re.compile(r'\{([0-9A-Za-z_][0-9A-Za-z_-]*)\}')
 
     for e in xml.iter():
-        text = e.text
-
-        if text.strip() == '':
+        if e.text is None:
             continue
 
-        nodes = []
+        nodes: list[etree._Element] = []
         start = ''
         rest  = e.text
 
-        for match in adoc_attribute.findall(text):
+        for match in adoc_attribute.findall(str(e.text)):
             index = rest.find('{' + match + '}')
 
             if not nodes:
