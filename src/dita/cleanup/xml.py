@@ -181,6 +181,9 @@ def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, list[str]], 
         if not match:
             warn(file_path + ": No matching ID: " + href)
             continue
+        if len(match) > 1:
+            warn(file_path + ": Multiple matching IDs: " + href)
+            continue
 
         target_id = match[0]
         topic_id, target_file = xml_ids[target_id]
@@ -189,5 +192,7 @@ def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, list[str]], 
             e.attrib['href'] = target_file + '#' + topic_id
         else:
             e.attrib['href'] = target_file + '#' + topic_id + '/' + target_id
+
+        updated = True
 
     return updated
