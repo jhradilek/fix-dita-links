@@ -119,7 +119,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     args = parser.parse_args(argv)
 
-    if args.files == '-':
+    if args.files[0] == '-':
         args.files = [sys.stdin]
         args.output = sys.stdout
     if args.output == '-':
@@ -152,11 +152,14 @@ def process_files(args: argparse.Namespace) -> int:
         if args.prune_includes and prune_includes(xml):
             updated = True
 
-        if args.output == sys.stdout and not args.xref_dir:
-            sys.stdout.write(etree.tostring(xml, encoding='unicode'))
+        if args.output == sys.stdout:
+            if not args.xref_dir:
+                sys.stdout.write(etree.tostring(xml, encoding='unicode'))
             continue
 
-        if not updated:
+        if args.output:
+            file_path = args.output
+        elif not updated:
             continue
 
         try:
@@ -185,7 +188,9 @@ def process_files(args: argparse.Namespace) -> int:
             sys.stdout.write(etree.tostring(xml, encoding='unicode'))
             continue
 
-        if not updated:
+        if args.output:
+            file_path = args.output
+        elif not updated:
             continue
 
         try:
