@@ -75,11 +75,10 @@ def prune_includes(xml: etree._ElementTree) -> bool:
     return updated
 
 def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
+    updated = False
 
     if not conref_prefix.endswith('/'):
         conref_prefix = conref_prefix + '/'
-
-    updated = False
 
     adoc_attribute = re.compile(r'\{([0-9A-Za-z_][0-9A-Za-z_-]*)\}')
 
@@ -117,10 +116,11 @@ def update_image_paths(xml: etree._ElementTree, images_dir: str) -> bool:
     if images_dir == '':
         return False
 
+    updated = False
+
     if not images_dir.endswith('/'):
         images_dir = images_dir + '/'
 
-    updated = False
 
     for e in xml.iter():
         if e.tag != 'image':
