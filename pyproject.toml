@@ -25,7 +25,7 @@ Repository = "https://github.com/jhradilek/fix-dita-links"
 Issues = "https://github.com/jhradilek/fix-dita-links/issues"
 
 [project.scripts]
-content-type-editor = "dita.cleanup.cli:run"
+dita-cleanup = "dita.cleanup.cli:run"
 
 [build-system]
 requires = ["setuptools >= 61.0"]
