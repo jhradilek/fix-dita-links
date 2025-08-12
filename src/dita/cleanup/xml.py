@@ -74,6 +74,47 @@ def prune_includes(xml: etree._ElementTree) -> bool:
 
     return updated
 
+def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
+
+    if not conref_prefix.endswith('/'):
+        conref_prefix = conref_prefix + '/'
+
+    updated = False
+
+    adoc_attribute = re.compile(r'\{([0-9A-Za-z_][0-9A-Za-z_-]*)\}')
+
+    for e in xml.iter():
+        text = e.text
+
+        if text.strip() == '':
+            continue
+
+        nodes = []
+        start = ''
+        rest  = e.text
+
+        for match in adoc_attribute.findall(text):
+            index = rest.find('{' + match + '}')
+
+            if not nodes:
+                start = rest[:index]
+            else:
+                nodes[-1].tail = rest[:index]
+
+            phrase = etree.Element('ph')
+            phrase.set('conref', conref_prefix + match.lower())
+            nodes.append(phrase)
+            rest = rest[index + len(match) + 2:]
+
+        if nodes:
+            nodes[-1].tail = rest
+            e.text = start
+
+            for node in nodes:
+                e.append(node)
+
+    return updated
+
 def update_image_paths(xml: etree._ElementTree, images_dir: str) -> bool:
     if images_dir == '':
         return False

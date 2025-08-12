@@ -28,7 +28,7 @@ import os
 
 from lxml import etree
 from . import NAME, VERSION, DESCRIPTION
-from .xml import update_image_paths, prune_ids, prune_includes
+from .xml import replace_attributes, update_image_paths, prune_ids, prune_includes
 
 def exit_with_error(error_message: str, exit_status: int = errno.EPERM) -> None:
     print(f'{NAME}: {error_message}', file=sys.stderr)
@@ -45,13 +45,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser._optionals.title = 'Options'
     parser._positionals.title = 'Arguments'
 
+    parser.add_argument('-C', '--conref-target',
+        default=False,
+        metavar='TARGET',
+        help='replace attribute references with reusable content references')
     parser.add_argument('-D', '--images-dir',
         default=False,
+        metavar='DIRECTORY',
         help='add a directory path to all image targets')
     parser.add_argument('-i', '--prune-ids',
         default=False,
         action='store_true',
-        help='remove invalid content from element ids')
+        help='remove invalid content from element IDs')
     parser.add_argument('-I', '--prune-includes',
         default=False,
         action='store_true',
@@ -99,6 +104,9 @@ def process_files(args: argparse.Namespace) -> int:
             continue
 
         updated = False
+
+        if args.conref_target and replace_attributes(xml, args.conref_target.strip()):
+            updated = True
 
         if args.images_dir and update_image_paths(xml, args.images_dir.strip()):
             updated = True
