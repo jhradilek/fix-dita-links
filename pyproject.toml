@@ -5,7 +5,7 @@ description = "Clean up DITA topics after conversion from AsciiDoc."
 license = "MIT"
 license-files = ["LICENSE"]
 readme = "README.md"
-requires-python = ">= 3.10"
+requires-python = ">= 3.12"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
