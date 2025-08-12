@@ -1,0 +1,43 @@
+[project]
+name = "dita-cleanup"
+authors = [{name = "Jaromir Hradilek", email="jhradilek@gmail.com"}]
+description = "Clean up DITA topics after conversion from AsciiDoc."
+license = "MIT"
+license-files = ["LICENSE"]
+readme = "README.md"
+requires-python = ">= 3.12"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Topic :: Documentation",
+]
+dependencies = [
+  "lxml >= 4.9.2",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/jhradilek/fix-dita-links"
+Repository = "https://github.com/jhradilek/fix-dita-links"
+Issues = "https://github.com/jhradilek/fix-dita-links/issues"
+
+[project.scripts]
+dita-cleanup = "dita.cleanup.cli:run"
+
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "dita.cleanup.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = "test"
+verbosity_assertions = 2
+verbosity_test_cases = 2

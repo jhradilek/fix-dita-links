@@ -1,0 +1,4 @@
+# Do not commit generated files:
+__pycache__/
+*.egg-info/
+build/

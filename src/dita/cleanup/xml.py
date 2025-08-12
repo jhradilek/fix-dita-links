@@ -1,0 +1,198 @@
+# Copyright (C) 2025 Jaromir Hradilek
+
+# MIT License
+#
+# Permission  is hereby granted,  free of charge,  to any person  obtaining
+# a copy of  this software  and associated documentation files  (the "Soft-
+# ware"),  to deal in the Software  without restriction,  including without
+# limitation the rights to use,  copy, modify, merge,  publish, distribute,
+# sublicense, and/or sell copies of the Software,  and to permit persons to
+# whom the Software is furnished to do so,  subject to the following condi-
+# tions:
+#
+# The above copyright notice  and this permission notice  shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS",  WITHOUT WARRANTY OF ANY KIND,  EXPRESS
+# OR IMPLIED,  INCLUDING BUT NOT LIMITED TO  THE WARRANTIES OF MERCHANTABI-
+# LITY,  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT
+# SHALL THE AUTHORS OR COPYRIGHT HOLDERS  BE LIABLE FOR ANY CLAIM,  DAMAGES
+# OR OTHER LIABILITY,  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM,  OUT OF OR IN CONNECTION WITH  THE SOFTWARE  OR  THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+
+import re
+from lxml import etree
+from .out import warn
+
+__all__ = [
+    'list_ids', 'prune_ids', 'prune_includes', 'replace_attributes',
+    'update_image_paths', 'update_xref_targets'
+]
+
+def list_ids(xml: etree._ElementTree) -> list[str]:
+    result: list[str] = []
+    root   = xml.getroot()
+
+    if root.tag not in ['concept', 'reference', 'task', 'topic']:
+        return result
+
+    if root.attrib.has_key('id'):
+        result.append(str(root.attrib['id']))
+    else:
+        result.append('')
+
+    for e in xml.iter():
+        if e == root:
+            continue
+        if not e.attrib.has_key('id'):
+            continue
+        if str(e.attrib['id']).startswith('_'):
+            continue
+
+        result.append(str(e.attrib['id']))
+
+    return result
+
+def prune_ids(xml: etree._ElementTree) -> bool:
+    updated = False
+
+    adoc_attribute = re.compile(r'[_-]?\{([0-9A-Za-z_][0-9A-Za-z_-]*|set:.+?|counter2?:.+?)\}')
+    valid_id       = re.compile(r'^[A-Za-z_:][A-Za-z0-9_:.-]+$')
+
+    for e in xml.iter():
+        if not e.attrib.has_key('id'):
+            continue
+
+        xml_id = str(e.attrib['id'])
+
+        if valid_id.match(xml_id):
+            continue
+
+        e.attrib['id'] = adoc_attribute.sub('', xml_id)
+        updated = True
+
+    return updated
+
+def prune_includes(xml: etree._ElementTree) -> bool:
+    updated = False
+
+    for e in xml.iter():
+        if e.tag != 'xref':
+            continue
+        if not e.attrib.has_key('href'):
+            continue
+        if not str(e.attrib['href']).endswith('.adoc'):
+            continue
+
+        parent = e.getparent()
+
+        if parent is None:
+            continue
+
+        parent.remove(e)
+        updated = True
+
+        if len(parent) != 0:
+            continue
+
+        grandparent = parent.getparent()
+        if grandparent is None:
+            continue
+
+        grandparent.remove(parent)
+
+    return updated
+
+def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
+    updated = False
+
+    if not conref_prefix.endswith('/'):
+        conref_prefix = conref_prefix + '/'
+
+    adoc_attribute = re.compile(r'\{([0-9A-Za-z_][0-9A-Za-z_-]*)\}')
+
+    for e in xml.iter():
+        if e.text is None:
+            continue
+
+        nodes: list[etree._Element] = []
+        start = ''
+        rest  = e.text
+
+        for match in adoc_attribute.findall(str(e.text)):
+            index = rest.find('{' + match + '}')
+
+            if not nodes:
+                start = rest[:index]
+            else:
+                nodes[-1].tail = rest[:index]
+
+            phrase = etree.Element('ph')
+            phrase.set('conref', conref_prefix + match.lower())
+            nodes.append(phrase)
+            rest = rest[index + len(match) + 2:]
+
+        if nodes:
+            nodes[-1].tail = rest
+            e.text = start
+
+            for node in nodes:
+                e.append(node)
+
+    return updated
+
+def update_image_paths(xml: etree._ElementTree, images_dir: str) -> bool:
+    if images_dir == '':
+        return False
+
+    updated = False
+
+    if not images_dir.endswith('/'):
+        images_dir = images_dir + '/'
+
+    for e in xml.iter():
+        if e.tag != 'image':
+            continue
+        if not e.attrib.has_key('href'):
+            continue
+
+        e.attrib['href'] = images_dir + str(e.attrib['href'])
+        updated = True
+
+    return updated
+
+def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, list[str]], file_path: str) -> bool:
+    updated = False
+
+    for e in xml.iter():
+        if e.tag not in ['xref', 'link']:
+            continue
+        if e.attrib.has_key('scope') and e.attrib['scope'] == 'external':
+            continue
+        if not e.attrib.has_key('href'):
+            continue
+        if not str(e.attrib['href']).startswith('#'):
+            continue
+
+        href  = str(e.attrib['href']).lstrip('#')
+        match = [i for i in xml_ids.keys() if href == i or href.startswith(i + '_')]
+
+        if not match:
+            warn(file_path + ": No matching ID: " + href)
+            continue
+        if len(match) > 1:
+            warn(file_path + ": Multiple matching IDs: " + href)
+            continue
+
+        target_id = match[0]
+        topic_id, target_file = xml_ids[target_id]
+
+        if topic_id == target_id:
+            e.attrib['href'] = target_file + '#' + topic_id
+        else:
+            e.attrib['href'] = target_file + '#' + topic_id + '/' + target_id
+
+        updated = True
+
+    return updated
