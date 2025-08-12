@@ -22,20 +22,51 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 import argparse
-import errno
 import sys
-import os
 
+from errno import EPERM
 from lxml import etree
+from pathlib import Path
 from . import NAME, VERSION, DESCRIPTION
-from .xml import replace_attributes, update_image_paths, prune_ids, prune_includes
+from .out import warn
+from .xml import replace_attributes, update_image_paths, prune_ids, \
+                 prune_includes, list_ids, update_xref_targets
 
-def exit_with_error(error_message: str, exit_status: int = errno.EPERM) -> None:
-    print(f'{NAME}: {error_message}', file=sys.stderr)
-    sys.exit(exit_status)
+__all__ = [
+    'run'
+]
 
-def warn(error_message: str) -> None:
-    print(f'{NAME}: {error_message}', file=sys.stderr)
+def list_files(directory: str) -> list[Path]:
+    result: list[Path] = []
+    for root, dirs, files in Path(directory).walk(top_down=True, on_error=print):
+        for name in files:
+            if name.endswith('.dita') or name.endswith('.xml'):
+                result.append(Path(root, name))
+    return result
+
+def catalog_ids(directory: str) -> dict[str, list[str]] :
+    result: dict[str, list[str]] = {}
+
+    file_list = list_files(directory)
+
+    for file_path in file_list:
+        try:
+            xml = etree.parse(file_path)
+        except (etree.XMLSyntaxError, OSError) as message:
+            warn(str(message))
+            continue
+
+        id_list  = list_ids(xml)
+        topic_id = id_list[0]
+
+        for xml_id in id_list:
+            if xml_id in result:
+                warn(str(file_path) + ": Duplicate ID: " + xml_id)
+                continue
+
+            result[xml_id] = [topic_id, str(file_path)]
+
+    return result
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog=NAME,
@@ -53,6 +84,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=False,
         metavar='DIRECTORY',
         help='add a directory path to all image targets')
+    parser.add_argument('-X', '--xref-dir',
+        default=False,
+        metavar='DIRECTORY',
+        help='update all cross references based on the supplied files')
     parser.add_argument('-i', '--prune-ids',
         default=False,
         action='store_true',
@@ -79,7 +114,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     parser.add_argument('files', metavar='FILE',
         default='-',
-        nargs='*',
+        nargs='+',
         help='specify the DITA files to clean up')
 
     args = parser.parse_args(argv)
@@ -100,7 +135,7 @@ def process_files(args: argparse.Namespace) -> int:
             xml = etree.parse(file_path)
         except (etree.XMLSyntaxError, OSError) as message:
             warn(str(message))
-            exit_code = errno.EPERM
+            exit_code = EPERM
             continue
 
         updated = False
@@ -117,6 +152,35 @@ def process_files(args: argparse.Namespace) -> int:
         if args.prune_includes and prune_includes(xml):
             updated = True
 
+        if args.output == sys.stdout and not args.xref_dir:
+            sys.stdout.write(etree.tostring(xml, encoding='unicode'))
+            continue
+
+        if not updated:
+            continue
+
+        try:
+            xml.write(file_path)
+        except OSError as message:
+            warn(str(message))
+            exit_code = EPERM
+            continue
+
+    if not args.xref_dir:
+        return exit_code
+
+    xml_ids = catalog_ids(args.xref_dir)
+
+    for file_path in args.files:
+        try:
+            xml = etree.parse(file_path)
+        except (etree.XMLSyntaxError, OSError) as message:
+            warn(str(message))
+            exit_code = EPERM
+            continue
+
+        updated = update_xref_targets(xml, xml_ids, str(file_path))
+
         if args.output == sys.stdout:
             sys.stdout.write(etree.tostring(xml, encoding='unicode'))
             continue
@@ -128,7 +192,7 @@ def process_files(args: argparse.Namespace) -> int:
             xml.write(file_path)
         except OSError as message:
             warn(str(message))
-            exit_code = errno.EPERM
+            exit_code = EPERM
             continue
 
     return exit_code

@@ -23,6 +23,36 @@
 
 import re
 from lxml import etree
+from .out import warn
+
+__all__ = [
+    'list_ids', 'prune_ids', 'prune_includes', 'replace_attributes',
+    'update_image_paths', 'update_xref_targets'
+]
+
+def list_ids(xml: etree._ElementTree) -> list[str]:
+    result: list[str] = []
+    root   = xml.getroot()
+
+    if root.tag not in ['concept', 'reference', 'task', 'topic']:
+        return result
+
+    if root.attrib.has_key('id'):
+        result.append(str(root.attrib['id']))
+    else:
+        result.append('')
+
+    for e in xml.iter():
+        if e == root:
+            continue
+        if not e.attrib.has_key('id'):
+            continue
+        if str(e.attrib['id']).startswith('_'):
+            continue
+
+        result.append(str(e.attrib['id']))
+
+    return result
 
 def prune_ids(xml: etree._ElementTree) -> bool:
     updated = False
@@ -121,7 +151,6 @@ def update_image_paths(xml: etree._ElementTree, images_dir: str) -> bool:
     if not images_dir.endswith('/'):
         images_dir = images_dir + '/'
 
-
     for e in xml.iter():
         if e.tag != 'image':
             continue
@@ -130,5 +159,35 @@ def update_image_paths(xml: etree._ElementTree, images_dir: str) -> bool:
 
         e.attrib['href'] = images_dir + str(e.attrib['href'])
         updated = True
+
+    return updated
+
+def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, list[str]], file_path: str) -> bool:
+    updated = False
+
+    for e in xml.iter():
+        if e.tag not in ['xref', 'link']:
+            continue
+        if e.attrib.has_key('scope') and e.attrib['scope'] == 'external':
+            continue
+        if not e.attrib.has_key('href'):
+            continue
+        if not str(e.attrib['href']).startswith('#'):
+            continue
+
+        href  = str(e.attrib['href']).lstrip('#')
+        match = [i for i in xml_ids.keys() if href == i or href.startswith(i + '_')]
+
+        if not match:
+            warn(file_path + ": No matching ID: " + href)
+            continue
+
+        target_id = match[0]
+        topic_id, target_file = xml_ids[target_id]
+
+        if topic_id == target_id:
+            e.attrib['href'] = target_file + '#' + topic_id
+        else:
+            e.attrib['href'] = target_file + '#' + topic_id + '/' + target_id
 
     return updated
