@@ -44,7 +44,7 @@ def list_files(directory: str) -> list[Path]:
                 result.append(Path(root, name))
     return result
 
-def catalog_ids(directory: str) -> dict[str, list[str]] :
+def catalog_ids(directory: str) -> dict[str, list[str]]:
     result: dict[str, list[str]] = {}
 
     file_list = list_files(directory)
