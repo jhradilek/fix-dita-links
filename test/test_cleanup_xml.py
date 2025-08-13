@@ -1,7 +1,7 @@
 import unittest
 from io import StringIO
 from lxml import etree
-from src.dita.cleanup.xml import list_ids
+from src.dita.cleanup.xml import list_ids, prune_ids
 
 class TestDitaCleanupXML(unittest.TestCase):
     def test_list_ids(self):
@@ -81,3 +81,40 @@ class TestDitaCleanupXML(unittest.TestCase):
         ids = list_ids(xml)
 
         self.assertEqual(len(ids), 0)
+
+    def test_prune_ids(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id_{context}">
+            <title>Concept title</title>
+            <conbody>
+                <section id="section-id_{context}">
+                    <title>Section title</title>
+                    <p><ph id="phrase-id-{counter:seq1:1}">A phrase</ph></p>
+                </section>
+            </conbody>
+        </concept>
+        '''))
+
+        updated = prune_ids(xml)
+
+        self.assertTrue(updated)
+        self.assertTrue(xml.xpath('boolean(/concept[@id="topic-id"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/section[@id="section-id"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/section/p/ph[@id="phrase-id"])'))
+
+    def test_prune_ids_no_attributes(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <section id="section-id">
+                    <title>Section title</title>
+                    <p><ph id="phrase-id">A phrase</ph></p>
+                </section>
+            </conbody>
+        </concept>
+        '''))
+
+        updated = prune_ids(xml)
+
+        self.assertFalse(updated)
