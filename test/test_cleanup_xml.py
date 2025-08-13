@@ -1,8 +1,10 @@
 import unittest
+import contextlib
 from io import StringIO
 from lxml import etree
+from src.dita.cleanup import NAME
 from src.dita.cleanup.xml import list_ids, prune_ids, prune_includes, \
-    update_image_paths
+    update_image_paths, update_xref_targets
 
 class TestDitaCleanupXML(unittest.TestCase):
     def test_list_ids(self):
@@ -221,3 +223,76 @@ class TestDitaCleanupXML(unittest.TestCase):
         updated = update_image_paths(xml, 'images')
 
         self.assertFalse(updated)
+
+    def test_update_xref_targets(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p><xref href="#first-id">First reference</xref></p>
+                <p><xref href="#second-id_assembly-context">Second reference</xref></p>
+                <p><xref href="#third-id_assembly-context">Third reference</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        ids = {
+            'first-id': ['first-topic-id', 'first-topic.dita'],
+            'second-id': ['second-topic-id', 'second-topic.dita'],
+            'third-id': ['third-id', 'third-topic.dita']
+        }
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            updated = update_xref_targets(xml, ids, 'topic.dita')
+
+        self.assertTrue(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="first-topic.dita#first-topic-id/first-id"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2]/xref[@href="second-topic.dita#second-topic-id/second-id"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[3]/xref[@href="third-topic.dita#third-id"])'))
+        self.assertEqual(err.getvalue(), '')
+
+    def test_update_xref_targets_no_matches(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p><xref href="#first-id">First reference</xref></p>
+                <p><xref href="#second-id_assembly-context">Second reference</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        ids = {
+            'first-id': ['first-topic-id', 'first-topic.dita'],
+        }
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            updated = update_xref_targets(xml, ids, 'topic.dita')
+
+        self.assertTrue(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="first-topic.dita#first-topic-id/first-id"])'))
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: No matching ID: ')
+
+    def test_update_xref_targets_multiple_matches(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p><xref href="#first-id">First reference</xref></p>
+                <p><xref href="#second-id_assembly-context">Second reference</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        ids = {
+            'first-id': ['first-topic-id', 'first-topic.dita'],
+            'second-id': ['second-topic-id', 'second-topic.dita'],
+            'second-id_assembly-context': ['second-id_assembly_context', 'second-topic.dita'],
+        }
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            updated = update_xref_targets(xml, ids, 'topic.dita')
+
+        self.assertTrue(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="first-topic.dita#first-topic-id/first-id"])'))
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: Multiple matching IDs: ')
