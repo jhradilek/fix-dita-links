@@ -110,7 +110,7 @@ def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
     if not conref_prefix.endswith('/'):
         conref_prefix = conref_prefix + '/'
 
-    adoc_attribute = re.compile(r'\{([0-9A-Za-z_][0-9A-Za-z_-]*)\}')
+    adoc_attribute = re.compile(r'(?<!\$)\{([0-9A-Za-z_][0-9A-Za-z_-]*)\}')
 
     for e in xml.iter():
         if e.text is None:
