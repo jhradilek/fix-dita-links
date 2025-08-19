@@ -36,12 +36,12 @@ python3 -m pip install --upgrade dita-cleanup
 
 ## Usage
 
-*    Remove unresolved [AsciiDoc attribute references](https://docs.asciidoctor.org/asciidoc/latest/attributes/reference-attributes/#reference-custom) from element IDs:
+*   Remove unresolved [AsciiDoc attribute references](https://docs.asciidoctor.org/asciidoc/latest/attributes/reference-attributes/#reference-custom) from element IDs:
 
     ```console
     dita-cleanup -i *.dita
     ```
-*    Remove unresolved [AsciiDoc include directives](https://docs.asciidoctor.org/asciidoc/latest/directives/include/):
+*   Remove unresolved [AsciiDoc include directives](https://docs.asciidoctor.org/asciidoc/latest/directives/include/):
 
     ```console
     dita-cleanup -I *.dita
@@ -51,18 +51,18 @@ python3 -m pip install --upgrade dita-cleanup
     ```console
     dita-cleanup -C 'topic.dita#topic-id' *.dita
     ```
-*    Add a directory path to all image references:
+*   Add a directory path to all image references:
 
     ```console
     dita-cleanup -D ../images/ *.dita
     ```
-*    Update invlid cross references based on DITA files present in the supplied directory:
+*   Update invlid cross references based on DITA files present in the supplied directory:
 
     ```console
     dita-cleanup -X . *.dita
     ```
 
-*    Print the updated file to standard output instead of overwriting the supplied files:
+*   Print the updated files to standard output instead of overwriting the supplied files:
 
     ```console
     dita-cleanup -iI -D ../images/ -X . -o - *.dita
