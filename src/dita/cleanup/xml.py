@@ -156,7 +156,7 @@ def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
 
                 parent = e.getparent()
 
-                if not parent:
+                if parent is None:
                     continue
 
                 index = parent.index(e)
