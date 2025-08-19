@@ -104,41 +104,67 @@ def prune_includes(xml: etree._ElementTree) -> bool:
 
     return updated
 
+def rebuild_text(text: str, conref_prefix: str) -> tuple[str, list[etree._Element]]:
+    adoc_attribute = re.compile(r'(?<!\$)\{([0-9A-Za-z_][0-9A-Za-z_-]*)\}')
+
+    rest = text
+    start = ''
+    nodes: list[etree._Element] = []
+
+    while match := adoc_attribute.findall(rest):
+        tail, rest = rest.split('{' + match[0] + '}', 1)
+
+        if not nodes:
+            start = tail
+        else:
+            nodes[-1].tail = tail
+
+        node = etree.Element('ph')
+        node.set('conref', conref_prefix + match[0].lower())
+        nodes.append(node)
+
+    if nodes:
+        nodes[-1].tail = rest
+
+    return start, nodes
+
 def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
     updated = False
 
     if not conref_prefix.endswith('/'):
         conref_prefix = conref_prefix + '/'
 
-    adoc_attribute = re.compile(r'(?<!\$)\{([0-9A-Za-z_][0-9A-Za-z_-]*)\}')
-
     for e in xml.iter():
-        if e.text is None:
-            continue
+        if e.text:
+            text, nodes = rebuild_text(str(e.text), conref_prefix)
 
-        nodes: list[etree._Element] = []
-        start = ''
-        rest  = e.text
+            if nodes:
+                e.text = text
 
-        for match in adoc_attribute.findall(str(e.text)):
-            index = rest.find('{' + match + '}')
+                index = 0
+                for node in nodes:
+                    e.insert(index, node)
+                    index += 1
 
-            if not nodes:
-                start = rest[:index]
-            else:
-                nodes[-1].tail = rest[:index]
+                updated = True
 
-            phrase = etree.Element('ph')
-            phrase.set('conref', conref_prefix + match.lower())
-            nodes.append(phrase)
-            rest = rest[index + len(match) + 2:]
+        if e.tail:
+            text, nodes = rebuild_text(str(e.tail), conref_prefix)
 
-        if nodes:
-            nodes[-1].tail = rest
-            e.text = start
+            if nodes:
+                e.tail = text
 
-            for node in nodes:
-                e.append(node)
+                parent = e.getparent()
+
+                if not parent:
+                    continue
+
+                index = parent.index(e)
+                for node in nodes:
+                    index += 1
+                    parent.insert(index, node)
+
+                updated = True
 
     return updated
 
