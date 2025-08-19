@@ -23,7 +23,7 @@ In combination with [asciidoctor-dita-vale](https://github.com/jhradilek/asciido
 4.  Clean up the resulting DITA file:
 
     ```console
-    dita-cleanup -iI -X . -D ../images output_file.dita
+    dita-cleanup -iI -D ../images -X . output_file.dita
     ```
 
 ## Installation
