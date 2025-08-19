@@ -4,7 +4,7 @@ from io import StringIO
 from lxml import etree
 from src.dita.cleanup import NAME
 from src.dita.cleanup.xml import list_ids, prune_ids, prune_includes, \
-    update_image_paths, update_xref_targets
+    replace_attributes, update_image_paths, update_xref_targets
 
 class TestDitaCleanupXML(unittest.TestCase):
     def test_list_ids(self):
@@ -166,6 +166,70 @@ class TestDitaCleanupXML(unittest.TestCase):
 
         self.assertFalse(updated)
 
+    def test_replace_attributes(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p>first part {first-attribute} second part {second-attribute} third part <i>inline tag</i> fourth part {third-attribute} fifth part</p>
+                <p><i>first inline tag</i> first part {first-attribute} second part {second-attribute} third part <i>second inline tag</i> fourth part {third-attribute} fifth part</p>
+            </conbody>
+        </concept>
+        '''))
+
+        updated = replace_attributes(xml, 'topic.dita#topic-id')
+
+        self.assertTrue(updated)
+        self.assertEqual(str(xml.xpath('/concept/conbody/p[1]/text()[1]')[0]).strip(), 'first part')
+        self.assertEqual(str(xml.xpath('/concept/conbody/p[1]/text()[2]')[0]).strip(), 'second part')
+        self.assertEqual(str(xml.xpath('/concept/conbody/p[1]/text()[3]')[0]).strip(), 'third part')
+        self.assertEqual(str(xml.xpath('/concept/conbody/p[1]/text()[4]')[0]).strip(), 'fourth part')
+        self.assertEqual(str(xml.xpath('/concept/conbody/p[1]/text()[5]')[0]).strip(), 'fifth part')
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/i[text()="inline tag"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/ph[1][@conref="topic.dita#topic-id/first-attribute"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/ph[2][@conref="topic.dita#topic-id/second-attribute"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/ph[3][@conref="topic.dita#topic-id/third-attribute"])'))
+        self.assertEqual(str(xml.xpath('/concept/conbody/p[2]/text()[1]')[0]).strip(), 'first part')
+        self.assertEqual(str(xml.xpath('/concept/conbody/p[2]/text()[2]')[0]).strip(), 'second part')
+        self.assertEqual(str(xml.xpath('/concept/conbody/p[2]/text()[3]')[0]).strip(), 'third part')
+        self.assertEqual(str(xml.xpath('/concept/conbody/p[2]/text()[4]')[0]).strip(), 'fourth part')
+        self.assertEqual(str(xml.xpath('/concept/conbody/p[2]/text()[5]')[0]).strip(), 'fifth part')
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2]/i[1][text()="first inline tag"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2]/i[2][text()="second inline tag"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2]/ph[1][@conref="topic.dita#topic-id/first-attribute"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2]/ph[2][@conref="topic.dita#topic-id/second-attribute"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2]/ph[3][@conref="topic.dita#topic-id/third-attribute"])'))
+
+    def test_replace_attributes_with_slash(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p>first part {first-attribute} second part</p>
+            </conbody>
+        </concept>
+        '''))
+
+        updated = replace_attributes(xml, 'topic.dita#topic-id/')
+
+        self.assertTrue(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p/ph[@conref="topic.dita#topic-id/first-attribute"])'))
+
+    def test_replace_attributes_no_attributes(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p>first part second part</p>
+            </conbody>
+        </concept>
+        '''))
+
+        updated = replace_attributes(xml, 'topic.dita#topic-id')
+
+        self.assertFalse(updated)
+        self.assertFalse(xml.xpath('boolean(/concept/conbody/p/ph)'))
+
     def test_update_image_paths(self):
         xml = etree.parse(StringIO('''\
         <concept id="topic-id">
@@ -296,3 +360,21 @@ class TestDitaCleanupXML(unittest.TestCase):
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="first-topic.dita#first-topic-id/first-id"])'))
         self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: Multiple matching IDs: ')
+
+    def test_update_xref_targets_no_xrefs(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p>A paragraph without a cross reference.</p>
+            </conbody>
+        </concept>
+        '''))
+
+        ids = {}
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            updated = update_xref_targets(xml, ids, 'topic.dita')
+
+        self.assertFalse(updated)
+        self.assertEqual(err.getvalue(), '')
