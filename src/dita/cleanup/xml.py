@@ -45,6 +45,8 @@ def list_ids(xml: etree._ElementTree) -> list[str]:
     for e in xml.iter():
         if e == root:
             continue
+        if not e.attrib:
+            continue
         if not e.attrib.has_key('id'):
             continue
         if str(e.attrib['id']).startswith('_'):
@@ -61,6 +63,8 @@ def prune_ids(xml: etree._ElementTree) -> bool:
     valid_id       = re.compile(r'^[A-Za-z_:][A-Za-z0-9_:.-]+$')
 
     for e in xml.iter():
+        if not e.attrib:
+            continue
         if not e.attrib.has_key('id'):
             continue
 
@@ -79,6 +83,8 @@ def prune_includes(xml: etree._ElementTree) -> bool:
 
     for e in xml.iter():
         if e.tag != 'xref':
+            continue
+        if not e.attrib:
             continue
         if not e.attrib.has_key('href'):
             continue
@@ -180,6 +186,8 @@ def update_image_paths(xml: etree._ElementTree, images_dir: str) -> bool:
     for e in xml.iter():
         if e.tag != 'image':
             continue
+        if not e.attrib:
+            continue
         if not e.attrib.has_key('href'):
             continue
 
@@ -193,6 +201,8 @@ def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, s
 
     for e in xml.iter():
         if e.tag not in ['xref', 'link']:
+            continue
+        if not e.attrib:
             continue
         if e.attrib.has_key('scope') and e.attrib['scope'] == 'external':
             continue
