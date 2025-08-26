@@ -379,3 +379,33 @@ class TestDitaCleanupXML(unittest.TestCase):
 
         self.assertFalse(updated)
         self.assertEqual(err.getvalue(), '')
+
+    def test_update_xref_targets_relative_paths(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p><xref href="#first-id">First reference</xref></p>
+                <p><xref href="#second-id">Second reference</xref></p>
+                <p><xref href="#third-id">Third reference</xref></p>
+                <p><xref href="#fourth-id">Fourth reference</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        ids = {
+            'first-id': ('first-topic-id', Path('one/first-topic.dita')),
+            'second-id': ('second-topic-id', Path('two/second-topic.dita')),
+            'third-id': ('third-id', Path('one/three/third-topic.dita')),
+            'fourth-id': ('fourth-id', Path('fourth-topic.dita'))
+        }
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            updated = update_xref_targets(xml, ids, Path('one/topic.dita'))
+
+        self.assertTrue(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="first-topic.dita#first-topic-id/first-id"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2]/xref[@href="../two/second-topic.dita#second-topic-id/second-id"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[3]/xref[@href="three/third-topic.dita#third-id"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[4]/xref[@href="../fourth-topic.dita#fourth-id"])'))
+        self.assertEqual(err.getvalue(), '')
