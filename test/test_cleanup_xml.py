@@ -301,9 +301,9 @@ class TestDitaCleanupXML(unittest.TestCase):
         '''))
 
         ids = {
-            'first-id': ['first-topic-id', 'first-topic.dita'],
-            'second-id': ['second-topic-id', 'second-topic.dita'],
-            'third-id': ['third-id', 'third-topic.dita']
+            'first-id': ('first-topic-id', 'first-topic.dita'),
+            'second-id': ('second-topic-id', 'second-topic.dita'),
+            'third-id': ('third-id', 'third-topic.dita')
         }
 
         with contextlib.redirect_stderr(StringIO()) as err:
@@ -327,7 +327,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         '''))
 
         ids = {
-            'first-id': ['first-topic-id', 'first-topic.dita'],
+            'first-id': ('first-topic-id', 'first-topic.dita'),
         }
 
         with contextlib.redirect_stderr(StringIO()) as err:
@@ -349,9 +349,9 @@ class TestDitaCleanupXML(unittest.TestCase):
         '''))
 
         ids = {
-            'first-id': ['first-topic-id', 'first-topic.dita'],
-            'second-id': ['second-topic-id', 'second-topic.dita'],
-            'second-id_assembly-context': ['second-id_assembly_context', 'second-topic.dita'],
+            'first-id': ('first-topic-id', 'first-topic.dita'),
+            'second-id': ('second-topic-id', 'second-topic.dita'),
+            'second-id_assembly-context': ('second-id_assembly_context', 'second-topic.dita'),
         }
 
         with contextlib.redirect_stderr(StringIO()) as err:

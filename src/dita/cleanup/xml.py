@@ -188,7 +188,7 @@ def update_image_paths(xml: etree._ElementTree, images_dir: str) -> bool:
 
     return updated
 
-def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, list[str]], file_path: str) -> bool:
+def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, str]], file_path: str) -> bool:
     updated = False
 
     for e in xml.iter():
