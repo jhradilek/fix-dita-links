@@ -225,10 +225,17 @@ def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, P
         target_id = match[0]
         topic_id, target_file = xml_ids[target_id]
 
-        if topic_id == target_id:
-            e.attrib['href'] = str(target_file) + '#' + topic_id
+        if target_file.parent == file_path.parent:
+            target = str(target_file.name)
         else:
-            e.attrib['href'] = str(target_file) + '#' + topic_id + '/' + target_id
+            f = file_path.resolve()
+            t = target_file.resolve()
+            target = str(t.parent.relative_to(f.parent, walk_up=True) / t.name)
+
+        if topic_id == target_id:
+            e.attrib['href'] = target + '#' + topic_id
+        else:
+            e.attrib['href'] = target + '#' + topic_id + '/' + target_id
 
         updated = True
 

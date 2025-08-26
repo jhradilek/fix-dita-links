@@ -182,7 +182,7 @@ def process_files(args: argparse.Namespace) -> int:
             exit_code = EPERM
             continue
 
-        updated = update_xref_targets(xml, xml_ids, file_path)
+        updated = update_xref_targets(xml, xml_ids, Path(file_path))
 
         if args.output == sys.stdout:
             sys.stdout.write(etree.tostring(xml, encoding='unicode'))
