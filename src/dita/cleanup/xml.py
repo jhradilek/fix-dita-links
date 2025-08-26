@@ -23,6 +23,7 @@
 
 import re
 from lxml import etree
+from pathlib import Path
 from .out import warn
 
 __all__ = [
@@ -196,7 +197,7 @@ def update_image_paths(xml: etree._ElementTree, images_dir: str) -> bool:
 
     return updated
 
-def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, str]], file_path: str) -> bool:
+def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, Path]], file_path: Path) -> bool:
     updated = False
 
     for e in xml.iter():
@@ -215,19 +216,19 @@ def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, s
         match = [i for i in xml_ids.keys() if href == i or href.startswith(i + '_')]
 
         if not match:
-            warn(file_path + ": No matching ID: " + href)
+            warn(str(file_path) + ": No matching ID: " + href)
             continue
         if len(match) > 1:
-            warn(file_path + ": Multiple matching IDs: " + href)
+            warn(str(file_path) + ": Multiple matching IDs: " + href)
             continue
 
         target_id = match[0]
         topic_id, target_file = xml_ids[target_id]
 
         if topic_id == target_id:
-            e.attrib['href'] = target_file + '#' + topic_id
+            e.attrib['href'] = str(target_file) + '#' + topic_id
         else:
-            e.attrib['href'] = target_file + '#' + topic_id + '/' + target_id
+            e.attrib['href'] = str(target_file) + '#' + topic_id + '/' + target_id
 
         updated = True
 

@@ -44,8 +44,8 @@ def list_files(directory: str) -> list[Path]:
                 result.append(Path(root, name))
     return result
 
-def catalog_ids(directory: str) -> dict[str, tuple[str, str]]:
-    result: dict[str, tuple[str, str]] = {}
+def catalog_ids(directory: str) -> dict[str, tuple[str, Path]]:
+    result: dict[str, tuple[str, Path]] = {}
 
     file_list = list_files(directory)
 
@@ -64,7 +64,7 @@ def catalog_ids(directory: str) -> dict[str, tuple[str, str]]:
                 warn(str(file_path) + ": Duplicate ID: " + xml_id)
                 continue
 
-            result[xml_id] = (topic_id, str(file_path))
+            result[xml_id] = (topic_id, file_path)
 
     return result
 
@@ -182,7 +182,7 @@ def process_files(args: argparse.Namespace) -> int:
             exit_code = EPERM
             continue
 
-        updated = update_xref_targets(xml, xml_ids, str(file_path))
+        updated = update_xref_targets(xml, xml_ids, file_path)
 
         if args.output == sys.stdout:
             sys.stdout.write(etree.tostring(xml, encoding='unicode'))

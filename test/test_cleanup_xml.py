@@ -2,6 +2,7 @@ import unittest
 import contextlib
 from io import StringIO
 from lxml import etree
+from pathlib import Path
 from src.dita.cleanup import NAME
 from src.dita.cleanup.xml import list_ids, prune_ids, prune_includes, \
     replace_attributes, update_image_paths, update_xref_targets
@@ -301,13 +302,13 @@ class TestDitaCleanupXML(unittest.TestCase):
         '''))
 
         ids = {
-            'first-id': ('first-topic-id', 'first-topic.dita'),
-            'second-id': ('second-topic-id', 'second-topic.dita'),
-            'third-id': ('third-id', 'third-topic.dita')
+            'first-id': ('first-topic-id', Path('first-topic.dita')),
+            'second-id': ('second-topic-id', Path('second-topic.dita')),
+            'third-id': ('third-id', Path('third-topic.dita'))
         }
 
         with contextlib.redirect_stderr(StringIO()) as err:
-            updated = update_xref_targets(xml, ids, 'topic.dita')
+            updated = update_xref_targets(xml, ids, Path('topic.dita'))
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="first-topic.dita#first-topic-id/first-id"])'))
@@ -327,11 +328,11 @@ class TestDitaCleanupXML(unittest.TestCase):
         '''))
 
         ids = {
-            'first-id': ('first-topic-id', 'first-topic.dita'),
+            'first-id': ('first-topic-id', Path('first-topic.dita')),
         }
 
         with contextlib.redirect_stderr(StringIO()) as err:
-            updated = update_xref_targets(xml, ids, 'topic.dita')
+            updated = update_xref_targets(xml, ids, Path('topic.dita'))
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="first-topic.dita#first-topic-id/first-id"])'))
@@ -349,13 +350,13 @@ class TestDitaCleanupXML(unittest.TestCase):
         '''))
 
         ids = {
-            'first-id': ('first-topic-id', 'first-topic.dita'),
-            'second-id': ('second-topic-id', 'second-topic.dita'),
-            'second-id_assembly-context': ('second-id_assembly_context', 'second-topic.dita'),
+            'first-id': ('first-topic-id', Path('first-topic.dita')),
+            'second-id': ('second-topic-id', Path('second-topic.dita')),
+            'second-id_assembly-context': ('second-id_assembly_context', Path('second-topic.dita')),
         }
 
         with contextlib.redirect_stderr(StringIO()) as err:
-            updated = update_xref_targets(xml, ids, 'topic.dita')
+            updated = update_xref_targets(xml, ids, Path('topic.dita'))
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="first-topic.dita#first-topic-id/first-id"])'))
@@ -374,7 +375,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         ids = {}
 
         with contextlib.redirect_stderr(StringIO()) as err:
-            updated = update_xref_targets(xml, ids, 'topic.dita')
+            updated = update_xref_targets(xml, ids, Path('topic.dita'))
 
         self.assertFalse(updated)
         self.assertEqual(err.getvalue(), '')
