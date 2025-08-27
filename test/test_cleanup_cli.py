@@ -1,7 +1,7 @@
 import unittest
 import contextlib
 import sys
-from errno import ENOENT
+from errno import ENOENT, ENOTDIR
 from io import StringIO
 from src.dita.cleanup import cli
 from src.dita.cleanup import NAME, VERSION
@@ -149,25 +149,33 @@ class TestDitaCleanupCli(unittest.TestCase):
 
     def test_opt_xref_short(self):
         with contextlib.redirect_stdout(StringIO()) as out:
-            args = cli.parse_args(['-X', 'directory_name', 'test_file'])
+            args = cli.parse_args(['-X', '.', 'test_file'])
 
         self.assertEqual(out.getvalue(), '')
-        self.assertEqual(args.xref_dir, 'directory_name')
+        self.assertEqual(args.xref_dir, '.')
 
     def test_opt_xref_long(self):
         with contextlib.redirect_stdout(StringIO()) as out:
-            args = cli.parse_args(['--xref-dir', 'directory_name', 'test_file'])
+            args = cli.parse_args(['--xref-dir', '.', 'test_file'])
 
         self.assertEqual(out.getvalue(), '')
-        self.assertEqual(args.xref_dir, 'directory_name')
+        self.assertEqual(args.xref_dir, '.')
 
     def test_opt_xref_missing_argument(self):
         with self.assertRaises(SystemExit) as cm,\
              contextlib.redirect_stderr(StringIO()) as out:
-            cli.parse_args(['--xref-dir'])
+            cli.parse_args(['--xref-dir', 'test_file'])
 
         self.assertEqual(cm.exception.code, ENOENT)
         self.assertRegex(out.getvalue(), rf'^usage: {NAME}')
+
+    def test_opt_xref_invalid_argument(self):
+        with self.assertRaises(SystemExit) as cm,\
+             contextlib.redirect_stderr(StringIO()) as out:
+            cli.parse_args(['--xref-dir', 'file.dita', 'test_file'])
+
+        self.assertEqual(cm.exception.code, ENOTDIR)
+        self.assertRegex(out.getvalue(), rf"Not a directory: 'file.dita'")
 
     def test_opt_prune_ids_short(self):
         with contextlib.redirect_stdout(StringIO()) as out:

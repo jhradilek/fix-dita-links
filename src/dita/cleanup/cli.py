@@ -24,11 +24,11 @@
 import argparse
 import sys
 
-from errno import EPERM
+from errno import EPERM, ENOTDIR
 from lxml import etree
 from pathlib import Path
 from . import NAME, VERSION, DESCRIPTION
-from .out import warn
+from .out import exit_with_error, warn
 from .xml import replace_attributes, update_image_paths, prune_ids, \
                  prune_includes, list_ids, update_xref_targets
 
@@ -124,6 +124,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.output = sys.stdout
     if args.output == '-':
         args.output = sys.stdout
+
+    if args.xref_dir and not Path(args.xref_dir).is_dir():
+        exit_with_error(f"Not a directory: '{args.xref_dir}'", ENOTDIR)
 
     return args
 
