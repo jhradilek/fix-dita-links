@@ -127,25 +127,33 @@ class TestDitaCleanupCli(unittest.TestCase):
 
     def test_opt_images_short(self):
         with contextlib.redirect_stdout(StringIO()) as out:
-            args = cli.parse_args(['-D', 'directory_name', 'test_file'])
+            args = cli.parse_args(['-D', '.', 'test_file'])
 
         self.assertEqual(out.getvalue(), '')
-        self.assertEqual(args.images_dir, 'directory_name')
+        self.assertEqual(args.images_dir, '.')
 
     def test_opt_images_long(self):
         with contextlib.redirect_stdout(StringIO()) as out:
-            args = cli.parse_args(['--images-dir', 'directory_name', 'test_file'])
+            args = cli.parse_args(['--images-dir', '.', 'test_file'])
 
         self.assertEqual(out.getvalue(), '')
-        self.assertEqual(args.images_dir, 'directory_name')
+        self.assertEqual(args.images_dir, '.')
 
     def test_opt_images_missing_argument(self):
         with self.assertRaises(SystemExit) as cm,\
              contextlib.redirect_stderr(StringIO()) as out:
-            cli.parse_args(['--images-dir'])
+            cli.parse_args(['--images-dir', 'test_file'])
 
         self.assertEqual(cm.exception.code, ENOENT)
         self.assertRegex(out.getvalue(), rf'^usage: {NAME}')
+
+    def test_opt_images_invalid_argument(self):
+        with self.assertRaises(SystemExit) as cm,\
+             contextlib.redirect_stderr(StringIO()) as out:
+            cli.parse_args(['--images-dir', 'file.dita', 'test_file'])
+
+        self.assertEqual(cm.exception.code, ENOTDIR)
+        self.assertRegex(out.getvalue(), rf"Not a directory: 'file.dita'")
 
     def test_opt_xref_short(self):
         with contextlib.redirect_stdout(StringIO()) as out:

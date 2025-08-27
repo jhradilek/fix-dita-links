@@ -127,6 +127,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     if args.xref_dir and not Path(args.xref_dir).is_dir():
         exit_with_error(f"Not a directory: '{args.xref_dir}'", ENOTDIR)
+    if args.images_dir and not Path(args.images_dir).is_dir():
+        exit_with_error(f"Not a directory: '{args.images_dir}'", ENOTDIR)
 
     return args
 
