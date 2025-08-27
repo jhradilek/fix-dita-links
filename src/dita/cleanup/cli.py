@@ -148,7 +148,7 @@ def process_files(args: argparse.Namespace) -> int:
         if args.conref_target and replace_attributes(xml, args.conref_target.strip()):
             updated = True
 
-        if args.images_dir and update_image_paths(xml, Path(args.images_dir)):
+        if args.images_dir and update_image_paths(xml, Path(args.images_dir), Path(file_path)):
             updated = True
 
         if args.prune_ids and prune_ids(xml):

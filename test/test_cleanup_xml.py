@@ -247,7 +247,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         </concept>
         '''))
 
-        updated = update_image_paths(xml, Path('images'))
+        updated = update_image_paths(xml, Path('images'), Path('topic.dita'))
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="images/inline-image.png"])'))
@@ -269,7 +269,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         </concept>
         '''))
 
-        updated = update_image_paths(xml, Path('images/'))
+        updated = update_image_paths(xml, Path('images/'), Path('topic.dita'))
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="images/inline-image.png"])'))
@@ -285,9 +285,53 @@ class TestDitaCleanupXML(unittest.TestCase):
         </concept>
         '''))
 
-        updated = update_image_paths(xml, Path('images'))
+        updated = update_image_paths(xml, Path('images'), Path('topic.dita'))
 
         self.assertFalse(updated)
+
+    def test_update_image_paths_relative_paths(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p>A paragraph with an <image href="inline-image.png" placement="inline"><alt>inline image</alt></image>.</p>
+                <fig>
+                    <title>Figure title</title>
+                    <image href="separate-image.png" placement="break">
+                        <alt>A separate image</alt>
+                    </image>
+                </fig>
+            </conbody>
+        </concept>
+        '''))
+
+        updated = update_image_paths(xml, Path('first/images'), Path('first/second/topic.dita'))
+
+        self.assertTrue(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="../images/inline-image.png"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/fig/image[@href="../images/separate-image.png"])'))
+
+    def test_update_image_paths_same_paths(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p>A paragraph with an <image href="inline-image.png" placement="inline"><alt>inline image</alt></image>.</p>
+                <fig>
+                    <title>Figure title</title>
+                    <image href="separate-image.png" placement="break">
+                        <alt>A separate image</alt>
+                    </image>
+                </fig>
+            </conbody>
+        </concept>
+        '''))
+
+        updated = update_image_paths(xml, Path('first'), Path('first/topic.dita'))
+
+        self.assertFalse(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="inline-image.png"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/fig/image[@href="separate-image.png"])'))
 
     def test_update_xref_targets(self):
         xml = etree.parse(StringIO('''\
