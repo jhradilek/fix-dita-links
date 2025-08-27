@@ -175,14 +175,8 @@ def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
 
     return updated
 
-def update_image_paths(xml: etree._ElementTree, images_dir: str) -> bool:
-    if images_dir == '':
-        return False
-
+def update_image_paths(xml: etree._ElementTree, images_dir: Path) -> bool:
     updated = False
-
-    if not images_dir.endswith('/'):
-        images_dir = images_dir + '/'
 
     for e in xml.iter():
         if e.tag != 'image':
@@ -192,7 +186,7 @@ def update_image_paths(xml: etree._ElementTree, images_dir: str) -> bool:
         if not e.attrib.has_key('href'):
             continue
 
-        e.attrib['href'] = images_dir + str(e.attrib['href'])
+        e.attrib['href'] = str(images_dir) + '/' + str(e.attrib['href'])
         updated = True
 
     return updated

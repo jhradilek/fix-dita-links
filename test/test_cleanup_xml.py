@@ -247,7 +247,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         </concept>
         '''))
 
-        updated = update_image_paths(xml, 'images')
+        updated = update_image_paths(xml, Path('images'))
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="images/inline-image.png"])'))
@@ -269,7 +269,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         </concept>
         '''))
 
-        updated = update_image_paths(xml, 'images/')
+        updated = update_image_paths(xml, Path('images/'))
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="images/inline-image.png"])'))
@@ -285,7 +285,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         </concept>
         '''))
 
-        updated = update_image_paths(xml, 'images')
+        updated = update_image_paths(xml, Path('images'))
 
         self.assertFalse(updated)
 
