@@ -133,6 +133,24 @@ class TestDitaCleanupXML(unittest.TestCase):
                     <xref href="a-topic.dita">A topic</xref>
                 </p>
                 <p>
+                    Prepended text.
+                    <xref href="another-module.adoc" scope="external">another-module.adoc</xref>
+                </p>
+                <p>
+                    <xref href="another-module.adoc" scope="external">another-module.adoc</xref>
+                    Appended text.
+                </p>
+                <p>
+                    Prepended text.
+                    <xref href="another-module.adoc" scope="external">another-module.adoc</xref>
+                    Appended text.
+                </p>
+                <p>
+                    <ph>Prepended element.</ph> Prepended text.
+                    <xref href="another-module.adoc" scope="external">another-module.adoc</xref>
+                    Appended text. <ph>Appended element.</ph>
+                </p>
+                <p>
                     <xref href="a-module.adoc" scope="external">a-module.adoc</xref>
                     <xref href="another-module.adoc" scope="external">another-module.adoc</xref>
                 </p>
@@ -146,7 +164,13 @@ class TestDitaCleanupXML(unittest.TestCase):
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1])'))
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[1][@href="https://example.com"])'))
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[2][@href="a-topic.dita"])'))
-        self.assertFalse(xml.xpath('boolean(/concept/conbody/p[2])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2][normalize-space()="Prepended text."])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[3][normalize-space()="Appended text."])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[4][normalize-space()="Prepended text. Appended text."])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[5]/ph[1][normalize-space()="Prepended element."])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[5]/ph[2][normalize-space()="Appended element."])'))
+        self.assertTrue(" ".join(xml.xpath('/concept/conbody/p[5]/text()')[1].split()) == "Prepended text. Appended text.")
+        self.assertFalse(xml.xpath('boolean(/concept/conbody/p[6])'))
         self.assertFalse(xml.xpath('boolean(//xref[@href="a-module.adoc"])'))
         self.assertFalse(xml.xpath('boolean(//xref[@href="another-module.adoc"])'))
 
