@@ -107,7 +107,7 @@ def prune_includes(xml: etree._ElementTree) -> bool:
                 index = 0 if index <= 1 else index - 1
                 parent_tail = parent[index].tail
 
-                if parent_tail is not None and parent_tail != '':
+                if parent_tail is not None and parent_tail.strip() != '':
                     parent[index].tail = parent_tail + tail
                 else:
                     parent[index].tail = tail
