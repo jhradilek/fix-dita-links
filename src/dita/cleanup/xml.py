@@ -92,15 +92,34 @@ def prune_includes(xml: etree._ElementTree) -> bool:
         if not str(e.attrib['href']).endswith('.adoc'):
             continue
 
-        parent = e.getparent()
+        parent  = e.getparent()
+        tail    = e.tail
 
         if parent is None:
             continue
 
+        index   = parent.index(e)
         parent.remove(e)
         updated = True
 
         if len(parent) != 0:
+            if tail and tail.strip() != '':
+                index = 0 if index <= 1 else index - 1
+                parent_tail = parent[index].tail
+
+                if parent_tail is not None and parent_tail.strip() != '':
+                    parent[index].tail = parent_tail + tail
+                else:
+                    parent[index].tail = tail
+            continue
+
+        if parent.text and parent.text.strip() != '':
+            if tail and tail.strip() != '':
+                parent.text += tail
+            continue
+
+        if tail and tail.strip() != '':
+            parent.text = tail
             continue
 
         grandparent = parent.getparent()
