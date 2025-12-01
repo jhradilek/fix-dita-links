@@ -57,6 +57,10 @@ def catalog_ids(directory: str) -> dict[str, tuple[str, Path]]:
             continue
 
         id_list  = list_ids(xml)
+
+        if not id_list:
+            continue
+
         topic_id = id_list[0]
 
         for xml_id in id_list:
