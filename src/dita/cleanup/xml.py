@@ -159,10 +159,15 @@ def update_image_paths(xml: etree._ElementTree, images_dir: Path, file_path: Pat
 
         if i == f.parent:
             continue
-        else:
-            target = str(i.relative_to(f.parent, walk_up=True))
 
-        e.attrib['href'] = target + '/' + str(e.attrib['href'])
+        target = str(i.relative_to(f.parent, walk_up=True))
+        href   = str(e.attrib['href'])
+
+        if href.startswith(target + '/'):
+            warn(str(file_path) + ": Already in target path: " + href)
+            continue
+
+        e.attrib['href'] = target + '/' + href
 
         updated = True
 
