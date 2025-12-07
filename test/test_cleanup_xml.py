@@ -4,8 +4,8 @@ from io import StringIO
 from lxml import etree
 from pathlib import Path
 from src.dita.cleanup import NAME
-from src.dita.cleanup.xml import list_ids, prune_ids, prune_includes, \
-    replace_attributes, update_image_paths, update_xref_targets
+from src.dita.cleanup.xml import list_ids, prune_ids, replace_attributes, \
+    update_image_paths, update_xref_targets
 
 class TestDitaCleanupXML(unittest.TestCase):
     def test_list_ids(self):
@@ -120,74 +120,6 @@ class TestDitaCleanupXML(unittest.TestCase):
         '''))
 
         updated = prune_ids(xml)
-
-        self.assertFalse(updated)
-
-    def test_prune_includes(self):
-        xml = etree.parse(StringIO('''\
-        <concept id="assembly-id">
-            <title>Assembly title</title>
-            <conbody>
-                <p>
-                    <xref href="https://example.com" scope="external">An external link</xref>
-                    <xref href="a-topic.dita">A topic</xref>
-                </p>
-                <p>
-                    Prepended text.
-                    <xref href="another-module.adoc" scope="external">another-module.adoc</xref>
-                </p>
-                <p>
-                    <xref href="another-module.adoc" scope="external">another-module.adoc</xref>
-                    Appended text.
-                </p>
-                <p>
-                    Prepended text.
-                    <xref href="another-module.adoc" scope="external">another-module.adoc</xref>
-                    Appended text.
-                </p>
-                <p>
-                    <ph>Prepended element.</ph> Prepended text.
-                    <xref href="another-module.adoc" scope="external">another-module.adoc</xref>
-                    Appended text. <ph>Appended element.</ph>
-                </p>
-                <p>
-                    <xref href="a-module.adoc" scope="external">a-module.adoc</xref>
-                    <xref href="another-module.adoc" scope="external">another-module.adoc</xref>
-                </p>
-            </conbody>
-        </concept>
-        '''))
-
-        updated = prune_includes(xml)
-
-        self.assertTrue(updated)
-        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1])'))
-        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[1][@href="https://example.com"])'))
-        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[2][@href="a-topic.dita"])'))
-        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2][normalize-space()="Prepended text."])'))
-        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[3][normalize-space()="Appended text."])'))
-        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[4][normalize-space()="Prepended text. Appended text."])'))
-        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[5]/ph[1][normalize-space()="Prepended element."])'))
-        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[5]/ph[2][normalize-space()="Appended element."])'))
-        self.assertTrue(" ".join(xml.xpath('/concept/conbody/p[5]/text()')[1].split()) == "Prepended text. Appended text.")
-        self.assertFalse(xml.xpath('boolean(/concept/conbody/p[6])'))
-        self.assertFalse(xml.xpath('boolean(//xref[@href="a-module.adoc"])'))
-        self.assertFalse(xml.xpath('boolean(//xref[@href="another-module.adoc"])'))
-
-    def test_prune_includes_no_includes(self):
-        xml = etree.parse(StringIO('''\
-        <concept id="assembly-id">
-            <title>Assembly title</title>
-            <conbody>
-                <p>
-                    <xref href="https://example.com" scope="external">Example link</xref>
-                    <xref href="a-topic.dita">A topic</xref>
-                </p>
-            </conbody>
-        </concept>
-        '''))
-
-        updated = prune_includes(xml)
 
         self.assertFalse(updated)
 

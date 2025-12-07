@@ -23,7 +23,7 @@ In combination with [asciidoctor-dita-vale](https://github.com/jhradilek/asciido
 4.  Clean up the resulting DITA file:
 
     ```console
-    dita-cleanup -iI -D ../images -X . output_file.dita
+    dita-cleanup -i -D ../images -X . output_file.dita
     ```
 
 ## Installation
@@ -40,11 +40,6 @@ python3 -m pip install --upgrade dita-cleanup
 
     ```console
     dita-cleanup --prune-ids *.dita
-    ```
-*   Remove unresolved [AsciiDoc include directives](https://docs.asciidoctor.org/asciidoc/latest/directives/include/):
-
-    ```console
-    dita-cleanup --prune-includes *.dita
     ```
 *   Replace unresolved [AsciiDoc attribute references](https://docs.asciidoctor.org/asciidoc/latest/attributes/reference-attributes/#reference-custom) with reusable content references:
 

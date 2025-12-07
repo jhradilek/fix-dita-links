@@ -30,7 +30,7 @@ from pathlib import Path
 from . import NAME, VERSION, DESCRIPTION
 from .out import exit_with_error, warn
 from .xml import replace_attributes, update_image_paths, prune_ids, \
-                 prune_includes, list_ids, update_xref_targets
+                 list_ids, update_xref_targets
 
 __all__ = [
     'run'
@@ -96,10 +96,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=False,
         action='store_true',
         help='remove invalid content from element IDs')
-    parser.add_argument('-I', '--prune-includes',
-        default=False,
-        action='store_true',
-        help='remove unresolved include statements')
 
     out = parser.add_mutually_exclusive_group()
     out.add_argument('-o', '--output',
@@ -156,9 +152,6 @@ def process_files(args: argparse.Namespace) -> int:
             updated = True
 
         if args.prune_ids and prune_ids(xml):
-            updated = True
-
-        if args.prune_includes and prune_includes(xml):
             updated = True
 
         if args.output == sys.stdout:
