@@ -3,13 +3,15 @@ import contextlib
 import sys
 from errno import ENOENT, ENOTDIR
 from io import StringIO
+from unittest.mock import patch
 from src.dita.cleanup import cli
 from src.dita.cleanup import NAME, VERSION
 
 class TestDitaCleanupCli(unittest.TestCase):
     def test_invalid_option(self):
         with self.assertRaises(SystemExit) as cm,\
-             contextlib.redirect_stderr(StringIO()) as err:
+             contextlib.redirect_stderr(StringIO()) as err,\
+             patch.dict('os.environ', {'NO_COLOR': 'true'}):
             cli.parse_args(['--invalid-option'])
 
         self.assertEqual(cm.exception.code, ENOENT)
@@ -17,7 +19,8 @@ class TestDitaCleanupCli(unittest.TestCase):
 
     def test_missing_argument(self):
         with self.assertRaises(SystemExit) as cm,\
-             contextlib.redirect_stderr(StringIO()) as err:
+             contextlib.redirect_stderr(StringIO()) as err,\
+             patch.dict('os.environ', {'NO_COLOR': 'true'}):
             cli.parse_args([])
 
         self.assertEqual(cm.exception.code, ENOENT)
@@ -93,7 +96,8 @@ class TestDitaCleanupCli(unittest.TestCase):
 
     def test_opt_output_missing_argument(self):
         with self.assertRaises(SystemExit) as cm,\
-             contextlib.redirect_stderr(StringIO()) as out:
+             contextlib.redirect_stderr(StringIO()) as out,\
+             patch.dict('os.environ', {'NO_COLOR': 'true'}):
             cli.parse_args(['--output'])
 
         self.assertEqual(cm.exception.code, ENOENT)
@@ -119,7 +123,8 @@ class TestDitaCleanupCli(unittest.TestCase):
 
     def test_opt_conref_missing_argument(self):
         with self.assertRaises(SystemExit) as cm,\
-             contextlib.redirect_stderr(StringIO()) as out:
+             contextlib.redirect_stderr(StringIO()) as out,\
+             patch.dict('os.environ', {'NO_COLOR': 'true'}):
             cli.parse_args(['--conref-target'])
 
         self.assertEqual(cm.exception.code, ENOENT)
@@ -141,7 +146,8 @@ class TestDitaCleanupCli(unittest.TestCase):
 
     def test_opt_images_missing_argument(self):
         with self.assertRaises(SystemExit) as cm,\
-             contextlib.redirect_stderr(StringIO()) as out:
+             contextlib.redirect_stderr(StringIO()) as out,\
+             patch.dict('os.environ', {'NO_COLOR': 'true'}):
             cli.parse_args(['--images-dir', 'test_file'])
 
         self.assertEqual(cm.exception.code, ENOENT)
@@ -171,7 +177,8 @@ class TestDitaCleanupCli(unittest.TestCase):
 
     def test_opt_xref_missing_argument(self):
         with self.assertRaises(SystemExit) as cm,\
-             contextlib.redirect_stderr(StringIO()) as out:
+             contextlib.redirect_stderr(StringIO()) as out,\
+             patch.dict('os.environ', {'NO_COLOR': 'true'}):
             cli.parse_args(['--xref-dir', 'test_file'])
 
         self.assertEqual(cm.exception.code, ENOENT)
