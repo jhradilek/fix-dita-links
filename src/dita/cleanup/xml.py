@@ -27,8 +27,8 @@ from pathlib import Path
 from .out import warn
 
 __all__ = [
-    'list_ids', 'prune_ids', 'prune_includes', 'replace_attributes',
-    'update_image_paths', 'update_xref_targets'
+    'list_ids', 'prune_ids', 'replace_attributes', 'update_image_paths',
+    'update_xref_targets'
 ]
 
 def list_ids(xml: etree._ElementTree) -> list[str]:
@@ -76,57 +76,6 @@ def prune_ids(xml: etree._ElementTree) -> bool:
 
         e.attrib['id'] = adoc_attribute.sub('', xml_id)
         updated = True
-
-    return updated
-
-def prune_includes(xml: etree._ElementTree) -> bool:
-    updated = False
-
-    for e in xml.iter():
-        if e.tag != 'xref':
-            continue
-        if not e.attrib:
-            continue
-        if not e.attrib.has_key('href'):
-            continue
-        if not str(e.attrib['href']).endswith('.adoc'):
-            continue
-
-        parent  = e.getparent()
-        tail    = e.tail
-
-        if parent is None:
-            continue
-
-        index   = parent.index(e)
-        parent.remove(e)
-        updated = True
-
-        if len(parent) != 0:
-            if tail and tail.strip() != '':
-                index = 0 if index <= 1 else index - 1
-                parent_tail = parent[index].tail
-
-                if parent_tail is not None and parent_tail.strip() != '':
-                    parent[index].tail = parent_tail + tail
-                else:
-                    parent[index].tail = tail
-            continue
-
-        if parent.text and parent.text.strip() != '':
-            if tail and tail.strip() != '':
-                parent.text += tail
-            continue
-
-        if tail and tail.strip() != '':
-            parent.text = tail
-            continue
-
-        grandparent = parent.getparent()
-        if grandparent is None:
-            continue
-
-        grandparent.remove(parent)
 
     return updated
 

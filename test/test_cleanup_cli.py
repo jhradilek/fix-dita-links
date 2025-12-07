@@ -205,17 +205,3 @@ class TestDitaCleanupCli(unittest.TestCase):
 
         self.assertEqual(out.getvalue(), '')
         self.assertTrue(args.prune_ids)
-
-    def test_opt_prune_includes_short(self):
-        with contextlib.redirect_stdout(StringIO()) as out:
-            args = cli.parse_args(['-I', 'test_file'])
-
-        self.assertEqual(out.getvalue(), '')
-        self.assertTrue(args.prune_includes)
-
-    def test_opt_prune_includes_long(self):
-        with contextlib.redirect_stdout(StringIO()) as out:
-            args = cli.parse_args(['--prune-includes', 'test_file'])
-
-        self.assertEqual(out.getvalue(), '')
-        self.assertTrue(args.prune_includes)
