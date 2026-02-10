@@ -67,7 +67,7 @@ class TestDitaCleanupCli(unittest.TestCase):
     def test_opt_version_short(self):
         with self.assertRaises(SystemExit) as cm,\
              contextlib.redirect_stdout(StringIO()) as out:
-            cli.parse_args(['-v'])
+            cli.parse_args(['-V'])
 
         self.assertEqual(cm.exception.code, 0)
         self.assertEqual(out.getvalue().rstrip(), f'{NAME} {VERSION}')
@@ -219,3 +219,17 @@ class TestDitaCleanupCli(unittest.TestCase):
 
         self.assertEqual(out.getvalue(), '')
         self.assertTrue(args.prune_xrefs)
+
+    def test_opt_verbose_short(self):
+        with contextlib.redirect_stdout(StringIO()) as out:
+            args = cli.parse_args(['-v', 'test_file'])
+
+        self.assertEqual(out.getvalue(), '')
+        self.assertTrue(args.verbose)
+
+    def test_opt_verbose_long(self):
+        with contextlib.redirect_stdout(StringIO()) as out:
+            args = cli.parse_args(['--verbose', 'test_file'])
+
+        self.assertEqual(out.getvalue(), '')
+        self.assertTrue(args.verbose)

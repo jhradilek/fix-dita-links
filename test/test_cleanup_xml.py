@@ -5,7 +5,8 @@ from lxml import etree
 from pathlib import Path
 from src.dita.cleanup import NAME
 from src.dita.cleanup.xml import list_ids, prune_ids, prune_xrefs, \
-    replace_attributes, update_image_paths, update_xref_targets
+     replace_attributes, report_problems, update_image_paths, \
+     update_xref_targets
 
 class TestDitaCleanupXML(unittest.TestCase):
     def test_list_ids(self):
@@ -217,6 +218,33 @@ class TestDitaCleanupXML(unittest.TestCase):
 
         self.assertFalse(updated)
         self.assertFalse(xml.xpath('boolean(/concept/conbody/p/ph)'))
+
+    def test_report_problems(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id-{first}">
+            <title>{second} title</title>
+            <conbody>
+                <p><b>{second}:</b> {third}</p>
+                <p><ph id="phrase-id-{counter:seq1:A}">A phrase</ph></p>
+                <p>{counter:seq1}) A sentence.</p>
+                <p><xref href="#first-id_{fourth}">First reference</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            report_problems(xml, Path('topic.dita'))
+
+        messages = err.getvalue().splitlines()
+        attributes = [m.split(': ')[3] for m in messages]
+
+        self.assertEqual(len(messages), 6)
+        self.assertTrue('first' in attributes)
+        self.assertTrue('second' in attributes)
+        self.assertTrue('third' in attributes)
+        self.assertTrue('fourth' in attributes)
+        self.assertTrue('counter:seq1:A' in attributes)
+        self.assertTrue('counter:seq1' in attributes)
 
     def test_update_image_paths(self):
         xml = etree.parse(StringIO('''\
