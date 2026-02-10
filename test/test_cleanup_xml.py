@@ -4,8 +4,8 @@ from io import StringIO
 from lxml import etree
 from pathlib import Path
 from src.dita.cleanup import NAME
-from src.dita.cleanup.xml import list_ids, prune_ids, replace_attributes, \
-    update_image_paths, update_xref_targets
+from src.dita.cleanup.xml import list_ids, prune_ids, prune_xrefs, \
+    replace_attributes, update_image_paths, update_xref_targets
 
 class TestDitaCleanupXML(unittest.TestCase):
     def test_list_ids(self):
@@ -120,6 +120,37 @@ class TestDitaCleanupXML(unittest.TestCase):
         '''))
 
         updated = prune_ids(xml)
+
+        self.assertFalse(updated)
+
+    def test_prune_xrefs(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p><xref href="#first-id_{context}">Second reference</xref></p>
+                <p><xref href="#second-id-{context}">Third reference</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        updated = prune_xrefs(xml)
+
+        self.assertTrue(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="#first-id"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2]/xref[@href="#second-id"])'))
+
+    def test_prune_xrefs_no_attributes(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p><xref href="#first-id">First reference</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        updated = prune_xrefs(xml)
 
         self.assertFalse(updated)
 

@@ -71,6 +71,6 @@ python3 -m pip install --upgrade dita-cleanup
 
 ## Copyright
 
-Copyright © 2025 Jaromir Hradilek
+Copyright © 2025, 2026 Jaromir Hradilek
 
 This program is free software, released under the terms of the MIT license. It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
