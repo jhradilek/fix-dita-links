@@ -1,4 +1,4 @@
-# Copyright (C) 2025 Jaromir Hradilek
+# Copyright (C) 2025, 2026 Jaromir Hradilek
 
 # MIT License
 #
@@ -28,7 +28,7 @@ __author__      = 'Jaromir Hradilek'
 __copyright__   = 'Copyright (C) 2025 Jaromir Hradilek'
 __license__     = 'MIT License'
 __description__ = __doc__
-__version__     = '0.9.4'
+__version__     = '0.9.5'
 
 # Expose general information about the project:
 NAME        = 'dita-cleanup'
