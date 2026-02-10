@@ -1,4 +1,4 @@
-# Copyright (C) 2025 Jaromir Hradilek
+# Copyright (C) 2025, 2026 Jaromir Hradilek
 
 # MIT License
 #
@@ -27,8 +27,8 @@ from pathlib import Path
 from .out import warn
 
 __all__ = [
-    'list_ids', 'prune_ids', 'replace_attributes', 'update_image_paths',
-    'update_xref_targets'
+    'list_ids', 'prune_ids', 'prune_xrefs', 'replace_attributes',
+    'update_image_paths', 'update_xref_targets'
 ]
 
 def list_ids(xml: etree._ElementTree) -> list[str]:
@@ -75,6 +75,29 @@ def prune_ids(xml: etree._ElementTree) -> bool:
             continue
 
         e.attrib['id'] = adoc_attribute.sub('', xml_id)
+        updated = True
+
+    return updated
+
+def prune_xrefs(xml: etree._ElementTree) -> bool:
+    updated = False
+
+    adoc_attribute = re.compile(r'[_-]?\{([0-9A-Za-z_][0-9A-Za-z_-]*|set:.+?|counter2?:.+?)\}')
+
+    for e in xml.iter():
+        if e.tag != 'xref':
+            continue
+        if not e.attrib:
+            continue
+        if not e.attrib.has_key('href'):
+            continue
+
+        xml_href = str(e.attrib['href'])
+
+        if not adoc_attribute.search(xml_href):
+            continue
+
+        e.attrib['href'] = adoc_attribute.sub('', xml_href)
         updated = True
 
     return updated
