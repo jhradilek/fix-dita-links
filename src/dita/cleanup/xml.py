@@ -24,12 +24,17 @@
 import re
 from lxml import etree
 from pathlib import Path
+from typing import Final
 from .out import warn
 
 __all__ = [
     'list_ids', 'prune_ids', 'prune_xrefs', 'replace_attributes',
     'update_image_paths', 'update_xref_targets'
 ]
+
+RE_ID_ATTRIBUTE:   Final = re.compile(r'[_-]?\{([0-9A-Za-z_][0-9A-Za-z_-]*|set:.+?|counter2?:.+?)\}')
+RE_TEXT_ATTRIBUTE: Final = re.compile(r'(?<!\$)\{([0-9A-Za-z_][0-9A-Za-z_-]*)\}')
+RE_TEXT_COUNTER:   Final = re.compile(r'(?<!\$)\{(set:.+?|counter2?:.+?)\}')
 
 def list_ids(xml: etree._ElementTree) -> list[str]:
     result: list[str] = []
@@ -60,7 +65,6 @@ def list_ids(xml: etree._ElementTree) -> list[str]:
 def prune_ids(xml: etree._ElementTree) -> bool:
     updated = False
 
-    adoc_attribute = re.compile(r'[_-]?\{([0-9A-Za-z_][0-9A-Za-z_-]*|set:.+?|counter2?:.+?)\}')
     valid_id       = re.compile(r'^[A-Za-z_:][A-Za-z0-9_:.-]+$')
 
     for e in xml.iter():
@@ -74,15 +78,13 @@ def prune_ids(xml: etree._ElementTree) -> bool:
         if valid_id.match(xml_id):
             continue
 
-        e.attrib['id'] = adoc_attribute.sub('', xml_id)
+        e.attrib['id'] = RE_ID_ATTRIBUTE.sub('', xml_id)
         updated = True
 
     return updated
 
 def prune_xrefs(xml: etree._ElementTree) -> bool:
     updated = False
-
-    adoc_attribute = re.compile(r'[_-]?\{([0-9A-Za-z_][0-9A-Za-z_-]*|set:.+?|counter2?:.+?)\}')
 
     for e in xml.iter():
         if e.tag != 'xref':
@@ -94,22 +96,20 @@ def prune_xrefs(xml: etree._ElementTree) -> bool:
 
         xml_href = str(e.attrib['href'])
 
-        if not adoc_attribute.search(xml_href):
+        if not RE_ID_ATTRIBUTE.search(xml_href):
             continue
 
-        e.attrib['href'] = adoc_attribute.sub('', xml_href)
+        e.attrib['href'] = RE_ID_ATTRIBUTE.sub('', xml_href)
         updated = True
 
     return updated
 
 def rebuild_text(text: str, conref_prefix: str) -> tuple[str, list[etree._Element]]:
-    adoc_attribute = re.compile(r'(?<!\$)\{([0-9A-Za-z_][0-9A-Za-z_-]*)\}')
-
     rest = text
     start = ''
     nodes: list[etree._Element] = []
 
-    while match := adoc_attribute.findall(rest):
+    while match := RE_TEXT_ATTRIBUTE.findall(rest):
         tail, rest = rest.split('{' + match[0] + '}', 1)
 
         if not nodes:
@@ -165,6 +165,25 @@ def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
                 updated = True
 
     return updated
+
+def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
+    attribute_references = set()
+
+    for e in xml.iter():
+        if matches := RE_TEXT_ATTRIBUTE.findall(str(e.text) + str(e.tail)):
+            attribute_references.update(set(matches))
+
+        if matches := RE_TEXT_COUNTER.findall(str(e.text) + str(e.tail)):
+            attribute_references.update(set(matches))
+
+        if e.attrib.has_key('id') and (matches := RE_ID_ATTRIBUTE.findall(str(e.attrib['id']))):
+            attribute_references.update(set(matches))
+
+        if e.attrib.has_key('href') and (matches := RE_ID_ATTRIBUTE.findall(str(e.attrib['href']))):
+            attribute_references.update(set(matches))
+
+    for attribute in iter(attribute_references):
+        warn(str(file_path) + ": Unresolved attribute reference: " + attribute)
 
 def update_image_paths(xml: etree._ElementTree, images_dir: Path, file_path: Path) -> bool:
     updated = False

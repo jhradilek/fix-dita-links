@@ -29,8 +29,8 @@ from lxml import etree
 from pathlib import Path
 from . import NAME, VERSION, DESCRIPTION
 from .out import exit_with_error, warn
-from .xml import replace_attributes, update_image_paths, prune_ids, \
-                 prune_xrefs, list_ids, update_xref_targets
+from .xml import list_ids, prune_ids, prune_xrefs, replace_attributes, \
+     report_problems, update_image_paths, update_xref_targets
 
 __all__ = [
     'run'
@@ -80,6 +80,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser._optionals.title = 'Options'
     parser._positionals.title = 'Arguments'
 
+    out = parser.add_mutually_exclusive_group()
+    out.add_argument('-o', '--output',
+        default=False,
+        metavar='FILE',
+        help='write output to the selected file instead of overwriting the file')
+
     parser.add_argument('-C', '--conref-target',
         default=False,
         metavar='TARGET',
@@ -100,18 +106,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=False,
         action='store_true',
         help='remove invalid content from reference targets')
-
-    out = parser.add_mutually_exclusive_group()
-    out.add_argument('-o', '--output',
+    parser.add_argument('-v', '--verbose',
         default=False,
-        metavar='FILE',
-        help='write output to the selected file instead of overwriting the file')
+        action='store_true',
+        help='report additional problems in the supplied files')
 
     info = parser.add_mutually_exclusive_group()
     info.add_argument('-h', '--help',
         action='help',
         help='display this help and exit')
-    info.add_argument('-v', '--version',
+    info.add_argument('-V', '--version',
         action='version',
         version=f'{NAME} {VERSION}',
         help='display version information and exit')
@@ -160,6 +164,9 @@ def process_files(args: argparse.Namespace) -> int:
 
         if args.prune_xrefs and prune_xrefs(xml):
             updated = True
+
+        if args.verbose:
+            report_problems(xml, Path(file_path))
 
         if args.output == sys.stdout:
             if not args.xref_dir:
