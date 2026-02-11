@@ -80,6 +80,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser._optionals.title = 'Options'
     parser._positionals.title = 'Arguments'
 
+    out = parser.add_mutually_exclusive_group()
+    out.add_argument('-o', '--output',
+        default=False,
+        metavar='FILE',
+        help='write output to the selected file instead of overwriting the file')
+
     parser.add_argument('-C', '--conref-target',
         default=False,
         metavar='TARGET',
@@ -104,12 +110,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=False,
         action='store_true',
         help='report additional problems in the supplied files')
-
-    out = parser.add_mutually_exclusive_group()
-    out.add_argument('-o', '--output',
-        default=False,
-        metavar='FILE',
-        help='write output to the selected file instead of overwriting the file')
 
     info = parser.add_mutually_exclusive_group()
     info.add_argument('-h', '--help',
