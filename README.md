@@ -12,7 +12,7 @@ In combination with [asciidoctor-dita-vale](https://github.com/jhradilek/asciido
 2.  Convert the AsciiDoc file to a generic DITA topic:
 
     ```console
-    asciidoctor -r dita-topic -b dita-topic -S secure source_file.adoc
+    dita-topic source_file.adoc
     ```
 3.  Convert the generic DITA topic to a specialized DITA concept, reference, or task:
 
@@ -45,6 +45,12 @@ python3 -m pip install --upgrade dita-cleanup
 
     ```console
     dita-cleanup --conref-target 'topic.dita#topic-id' *.dita
+    ```
+
+*   List any unresoved [AsciiDoc attribute references](https://docs.asciidoctor.org/asciidoc/latest/attributes/reference-attributes/#reference-custom):
+
+    ```console
+    dita-cleanup --verbose *.dita
     ```
 *   Add a directory path to all image references:
 
