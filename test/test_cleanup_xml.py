@@ -229,6 +229,7 @@ class TestDitaCleanupXML(unittest.TestCase):
                 <p><ph id="phrase-id-{counter:seq1:A}">A phrase</ph></p>
                 <p>{counter:seq1}) A sentence.</p>
                 <p><xref href="#first-id_{fourth}">First reference</xref></p>
+                <!-- {fifth} -->
             </conbody>
         </concept>
         '''))
@@ -246,6 +247,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         self.assertTrue('fourth' in attributes)
         self.assertTrue('counter:seq1:A' in attributes)
         self.assertTrue('counter:seq1' in attributes)
+        self.assertFalse('fifth' in attributes)
 
     def test_report_problems_missing_shortdesc(self):
         xml = etree.parse(StringIO('''\
