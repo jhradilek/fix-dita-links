@@ -219,10 +219,11 @@ class TestDitaCleanupXML(unittest.TestCase):
         self.assertFalse(updated)
         self.assertFalse(xml.xpath('boolean(/concept/conbody/p/ph)'))
 
-    def test_report_problems(self):
+    def test_report_problems_attributes(self):
         xml = etree.parse(StringIO('''\
         <concept id="topic-id-{first}">
             <title>{second} title</title>
+            <shortdesc>A short description.</shortdesc>
             <conbody>
                 <p><b>{second}:</b> {third}</p>
                 <p><ph id="phrase-id-{counter:seq1:A}">A phrase</ph></p>
@@ -245,6 +246,22 @@ class TestDitaCleanupXML(unittest.TestCase):
         self.assertTrue('fourth' in attributes)
         self.assertTrue('counter:seq1:A' in attributes)
         self.assertTrue('counter:seq1' in attributes)
+
+    def test_report_problems_missing_shortdesc(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <!-- A comment -->
+                <p>A paragraph.</p>
+            </conbody>
+        </concept>
+        '''))
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            report_problems(xml, Path('topic.dita'))
+
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: Missing short description')
 
     def test_update_image_paths(self):
         xml = etree.parse(StringIO('''\

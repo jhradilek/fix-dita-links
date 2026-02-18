@@ -168,19 +168,29 @@ def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
 
 def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
     attribute_references = set()
+    short_description    = False
 
     for e in xml.iter():
+        if e.tag == 'shortdesc':
+            short_description = True
+
         if matches := RE_TEXT_ATTRIBUTE.findall(str(e.text) + str(e.tail)):
             attribute_references.update(set(matches))
 
         if matches := RE_TEXT_COUNTER.findall(str(e.text) + str(e.tail)):
             attribute_references.update(set(matches))
 
+        if not e.attrib:
+            continue
+
         if e.attrib.has_key('id') and (matches := RE_ID_ATTRIBUTE.findall(str(e.attrib['id']))):
             attribute_references.update(set(matches))
 
         if e.attrib.has_key('href') and (matches := RE_ID_ATTRIBUTE.findall(str(e.attrib['href']))):
             attribute_references.update(set(matches))
+
+    if not short_description:
+        warn(str(file_path) + ": Missing short description")
 
     for attribute in iter(attribute_references):
         warn(str(file_path) + ": Unresolved attribute reference: " + attribute)
