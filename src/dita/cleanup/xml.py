@@ -171,6 +171,9 @@ def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
     short_description    = False
 
     for e in xml.iter():
+        if e.tag == etree.Comment:
+            continue
+
         if e.tag == 'shortdesc':
             short_description = True
 
