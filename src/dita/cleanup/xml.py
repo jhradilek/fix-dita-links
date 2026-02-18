@@ -167,6 +167,7 @@ def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
     return updated
 
 def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
+    topic_type           = xml.getroot().tag
     attribute_references = set()
     short_description    = False
 
@@ -191,6 +192,9 @@ def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
 
         if e.attrib.has_key('href') and (matches := RE_ID_ATTRIBUTE.findall(str(e.attrib['href']))):
             attribute_references.update(set(matches))
+
+    if topic_type == 'topic':
+        warn(str(file_path) + ": Generic topic found")
 
     if not short_description:
         warn(str(file_path) + ": Missing short description")
