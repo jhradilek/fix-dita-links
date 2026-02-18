@@ -180,6 +180,9 @@ def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
         if matches := RE_TEXT_COUNTER.findall(str(e.text) + str(e.tail)):
             attribute_references.update(set(matches))
 
+        if not e.attrib:
+            continue
+
         if e.attrib.has_key('id') and (matches := RE_ID_ATTRIBUTE.findall(str(e.attrib['id']))):
             attribute_references.update(set(matches))
 

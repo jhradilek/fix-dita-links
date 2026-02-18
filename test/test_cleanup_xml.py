@@ -252,6 +252,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         <concept id="topic-id">
             <title>Concept title</title>
             <conbody>
+                <!-- A comment -->
                 <p>A paragraph.</p>
             </conbody>
         </concept>
