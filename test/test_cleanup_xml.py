@@ -265,6 +265,21 @@ class TestDitaCleanupXML(unittest.TestCase):
 
         self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: Missing short description')
 
+    def test_report_problems_generic_topic(self):
+        xml = etree.parse(StringIO('''\
+        <topic id="topic-id">
+            <title>Topic title</title>
+            <body>
+                <p>A paragraph.</p>
+            </body>
+        </topic>
+        '''))
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            report_problems(xml, Path('topic.dita'))
+
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: Generic topic found')
+
     def test_update_image_paths(self):
         xml = etree.parse(StringIO('''\
         <concept id="topic-id">
