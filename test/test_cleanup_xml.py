@@ -530,3 +530,93 @@ class TestDitaCleanupXML(unittest.TestCase):
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[3]/xref[@href="three/third-topic.dita#third-id"])'))
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[4]/xref[@href="../fourth-topic.dita#fourth-id"])'))
         self.assertEqual(err.getvalue(), '')
+
+    def test_update_xref_targets_file_names(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p><xref href="topic.dita#topic-id">First reference</xref></p>
+                <p><xref href="topic.dita#section-id">Second reference</xref></p>
+                <p><xref href="topic.dita#topic-id/section-id">Third reference</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        ids = {
+            'topic-id': ('topic-id', Path('topic.dita')),
+            'section-id': ('topic-id', Path('topic.dita')),
+        }
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            updated = update_xref_targets(xml, ids, Path('topic.dita'))
+
+        self.assertTrue(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="topic.dita#topic-id"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2]/xref[@href="topic.dita#topic-id/section-id"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[3]/xref[@href="topic.dita#topic-id/section-id"])'))
+        self.assertEqual(err.getvalue(), '')
+
+    def test_update_xref_targets_file_intact(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p><xref href="topic.dita#topic-id/section-id">Reference</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        ids = {
+            'topic-id': ('topic-id', Path('topic.dita')),
+            'section-id': ('topic-id', Path('topic.dita')),
+        }
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            updated = update_xref_targets(xml, ids, Path('topic.dita'))
+
+        self.assertFalse(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="topic.dita#topic-id/section-id"])'))
+        self.assertEqual(err.getvalue(), '')
+
+    def test_update_xref_targets_file_wrong_file(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p><xref href="wrong-topic.dita#section-id">Reference</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        ids = {
+            'topic-id': ('topic-id', Path('topic.dita')),
+            'section-id': ('topic-id', Path('topic.dita')),
+        }
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            updated = update_xref_targets(xml, ids, Path('topic.dita'))
+
+        self.assertFalse(updated)
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: No matching ID in wrong-topic.dita: ')
+
+    def test_update_xref_targets_file_wrong_topic_id(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p><xref href="topic.dita#wrong-topic-id/section-id">Reference</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        ids = {
+            'topic-id': ('topic-id', Path('topic.dita')),
+            'section-id': ('topic-id', Path('topic.dita')),
+        }
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            updated = update_xref_targets(xml, ids, Path('topic.dita'))
+
+        self.assertFalse(updated)
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: No matching topic ID in topic.dita: ')
