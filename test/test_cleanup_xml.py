@@ -263,7 +263,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         with contextlib.redirect_stderr(StringIO()) as err:
             report_problems(xml, Path('topic.dita'))
 
-        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: Missing short description')
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: Missing short description')
 
     def test_report_problems_generic_topic(self):
         xml = etree.parse(StringIO('''\
@@ -278,7 +278,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         with contextlib.redirect_stderr(StringIO()) as err:
             report_problems(xml, Path('topic.dita'))
 
-        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: Generic topic found')
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: Generic topic found')
 
     def test_update_image_paths(self):
         xml = etree.parse(StringIO('''\
@@ -408,7 +408,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         self.assertFalse(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="images/inline-image.png"])'))
         self.assertTrue(xml.xpath('boolean(/concept/conbody/fig/image[@href="images/separate-image.png"])'))
-        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: Already in target path: ')
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: Already in target path: ')
 
     def test_update_xref_targets(self):
         xml = etree.parse(StringIO('''\
@@ -457,7 +457,7 @@ class TestDitaCleanupXML(unittest.TestCase):
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="first-topic.dita#first-topic-id/first-id"])'))
-        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: No matching ID: ')
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: No matching ID: ')
 
     def test_update_xref_targets_multiple_matches(self):
         xml = etree.parse(StringIO('''\
@@ -481,7 +481,7 @@ class TestDitaCleanupXML(unittest.TestCase):
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="first-topic.dita#first-topic-id/first-id"])'))
-        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: Multiple matching IDs: ')
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: Multiple matching IDs: ')
 
     def test_update_xref_targets_no_xrefs(self):
         xml = etree.parse(StringIO('''\
@@ -599,7 +599,7 @@ class TestDitaCleanupXML(unittest.TestCase):
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="topic.dita#topic-id/section-id"])'))
-        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: No matching ID in wrong-topic.dita: ')
+        self.assertRegex(err.getvalue(), rf"^{NAME}: topic\.dita: Target file changed: 'wrong-topic\.dita' -> 'topic\.dita'")
 
     def test_update_xref_targets_file_wrong_topic_id(self):
         xml = etree.parse(StringIO('''\
@@ -621,4 +621,4 @@ class TestDitaCleanupXML(unittest.TestCase):
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="topic.dita#topic-id/section-id"])'))
-        self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: No matching topic ID in topic.dita: ')
+        self.assertRegex(err.getvalue(), rf"^{NAME}: topic\.dita: Target topic ID changed: 'wrong-topic-id' -> 'topic-id'")
