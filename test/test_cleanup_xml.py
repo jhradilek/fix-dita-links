@@ -597,7 +597,8 @@ class TestDitaCleanupXML(unittest.TestCase):
         with contextlib.redirect_stderr(StringIO()) as err:
             updated = update_xref_targets(xml, ids, Path('topic.dita'))
 
-        self.assertFalse(updated)
+        self.assertTrue(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="topic.dita#topic-id/section-id"])'))
         self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: No matching ID in wrong-topic.dita: ')
 
     def test_update_xref_targets_file_wrong_topic_id(self):
@@ -618,5 +619,6 @@ class TestDitaCleanupXML(unittest.TestCase):
         with contextlib.redirect_stderr(StringIO()) as err:
             updated = update_xref_targets(xml, ids, Path('topic.dita'))
 
-        self.assertFalse(updated)
+        self.assertTrue(updated)
+        self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="topic.dita#topic-id/section-id"])'))
         self.assertRegex(err.getvalue(), rf'^{NAME}: topic.dita: No matching topic ID in topic.dita: ')

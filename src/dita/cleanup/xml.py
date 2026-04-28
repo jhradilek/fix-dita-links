@@ -263,13 +263,13 @@ def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, P
         target_id = match[0]
         topic_id, target_file = xml_ids[target_id]
 
-        if xref_file and xref_file != str(target_file):
+        xref_path = Path(file_path.parent, xref_file)
+
+        if xref_file and xref_path.resolve() != target_file.resolve():
             warn(str(file_path) + ": No matching ID in " + xref_file + ": " + xref_target_id)
-            continue
 
         if xref_topic_id and xref_topic_id != topic_id:
             warn(str(file_path) + ": No matching topic ID in " + xref_file + ": " + xref_topic_id)
-            continue
 
         if target_file.parent == file_path.parent:
             target = str(target_file.name)
