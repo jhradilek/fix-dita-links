@@ -244,21 +244,32 @@ def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, P
             continue
         if not e.attrib.has_key('href'):
             continue
-        if not str(e.attrib['href']).startswith('#'):
+        if not '#' in str(e.attrib['href']):
             continue
 
-        href  = str(e.attrib['href']).lstrip('#')
-        match = [i for i in xml_ids.keys() if href == i or href.startswith(i + '_')]
+        xref_href = str(e.attrib['href'])
+        xref_file, anchor = xref_href.split('#', maxsplit=1)
+        xref_topic_id, _, xref_target_id = anchor.rpartition('/')
+
+        match = [i for i in xml_ids.keys() if xref_target_id == i or xref_target_id.startswith(i + '_')]
 
         if not match:
-            warn(str(file_path) + ": No matching ID: " + href)
+            warn(str(file_path) + ": No matching ID: " + xref_target_id)
             continue
         if len(match) > 1:
-            warn(str(file_path) + ": Multiple matching IDs: " + href)
+            warn(str(file_path) + ": Multiple matching IDs: " + xref_target_id)
             continue
 
         target_id = match[0]
         topic_id, target_file = xml_ids[target_id]
+
+        if xref_file and xref_file != str(target_file):
+            warn(str(file_path) + ": No matching ID in " + xref_file + ": " + xref_target_id)
+            continue
+
+        if xref_topic_id and xref_topic_id != topic_id:
+            warn(str(file_path) + ": No matching topic ID in " + xref_file + ": " + xref_topic_id)
+            continue
 
         if target_file.parent == file_path.parent:
             target = str(target_file.name)
@@ -268,10 +279,14 @@ def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, P
             target = str(t.parent.relative_to(f.parent, walk_up=True) / t.name)
 
         if topic_id == target_id:
-            e.attrib['href'] = target + '#' + topic_id
+            result = target + '#' + topic_id
         else:
-            e.attrib['href'] = target + '#' + topic_id + '/' + target_id
+            result = target + '#' + topic_id + '/' + target_id
 
+        if result == xref_href:
+            continue
+
+        e.attrib['href'] = result
         updated = True
 
     return updated
