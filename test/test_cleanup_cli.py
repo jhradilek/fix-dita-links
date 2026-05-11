@@ -220,6 +220,20 @@ class TestDitaCleanupCli(unittest.TestCase):
         self.assertEqual(out.getvalue(), '')
         self.assertTrue(args.prune_xrefs)
 
+    def test_opt_aggressive_short(self):
+        with contextlib.redirect_stdout(StringIO()) as out:
+            args = cli.parse_args(['-a', 'test_file'])
+
+        self.assertEqual(out.getvalue(), '')
+        self.assertTrue(args.aggressive)
+
+    def test_opt_aggressive_long(self):
+        with contextlib.redirect_stdout(StringIO()) as out:
+            args = cli.parse_args(['--aggressive', 'test_file'])
+
+        self.assertEqual(out.getvalue(), '')
+        self.assertTrue(args.aggressive)
+
     def test_opt_verbose_short(self):
         with contextlib.redirect_stdout(StringIO()) as out:
             args = cli.parse_args(['-v', 'test_file'])

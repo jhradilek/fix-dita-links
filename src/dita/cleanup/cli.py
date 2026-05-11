@@ -106,6 +106,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=False,
         action='store_true',
         help='remove invalid content from reference targets')
+    parser.add_argument('-a', '--aggressive',
+        default=False,
+        action='store_true',
+        help='update cross references even if file names do not match')
     parser.add_argument('-v', '--verbose',
         default=False,
         action='store_true',
@@ -198,7 +202,7 @@ def process_files(args: argparse.Namespace) -> int:
             exit_code = EPERM
             continue
 
-        updated = update_xref_targets(xml, xml_ids, Path(file_path))
+        updated = update_xref_targets(xml, xml_ids, Path(file_path), args.aggressive)
 
         if args.output == sys.stdout:
             sys.stdout.write(etree.tostring(xml, encoding='unicode'))
