@@ -232,7 +232,7 @@ def update_image_paths(xml: etree._ElementTree, images_dir: Path, file_path: Pat
 
     return updated
 
-def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, Path]], file_path: Path) -> bool:
+def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, Path]], file_path: Path, aggressive: bool = False) -> bool:
     updated = False
 
     for e in xml.iter():
@@ -264,6 +264,10 @@ def update_xref_targets(xml: etree._ElementTree, xml_ids: dict[str, tuple[str, P
         topic_id, target_file = xml_ids[target_id]
 
         xref_path = Path(file_path.parent, xref_file)
+
+        if not aggressive and xref_file and target_file.name != xref_path.name:
+            warn(str(file_path) + ": Target file mismatch: expected '" + xref_path.name + "', got '" + target_file.name + "'")
+            continue
 
         if target_file.parent == file_path.parent:
             target = str(target_file.name)
