@@ -3,6 +3,7 @@ import contextlib
 from io import StringIO
 from lxml import etree
 from pathlib import Path
+from unittest.mock import patch
 from src.dita.cleanup import NAME
 from src.dita.cleanup.xml import list_ids, prune_ids, prune_xrefs, \
      replace_attributes, report_problems, update_image_paths, \
@@ -296,7 +297,8 @@ class TestDitaCleanupXML(unittest.TestCase):
         </concept>
         '''))
 
-        updated = update_image_paths(xml, Path('images'), Path('topic.dita'))
+        with patch.object(Path, 'exists', return_value=True):
+            updated = update_image_paths(xml, [Path('images')], Path('topic.dita'))
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="images/inline-image.png"])'))
@@ -318,7 +320,8 @@ class TestDitaCleanupXML(unittest.TestCase):
         </concept>
         '''))
 
-        updated = update_image_paths(xml, Path('images/'), Path('topic.dita'))
+        with patch.object(Path, 'exists', return_value=True):
+            updated = update_image_paths(xml, [Path('images/')], Path('topic.dita'))
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="images/inline-image.png"])'))
@@ -354,7 +357,8 @@ class TestDitaCleanupXML(unittest.TestCase):
         </concept>
         '''))
 
-        updated = update_image_paths(xml, Path('first/images'), Path('first/second/topic.dita'))
+        with patch.object(Path, 'exists', return_value=True):
+            updated = update_image_paths(xml, [Path('first/images')], Path('first/second/topic.dita'))
 
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="../images/inline-image.png"])'))
@@ -376,7 +380,8 @@ class TestDitaCleanupXML(unittest.TestCase):
         </concept>
         '''))
 
-        updated = update_image_paths(xml, Path('first'), Path('first/topic.dita'))
+        with patch.object(Path, 'exists', return_value=True):
+            updated = update_image_paths(xml, [Path('first')], Path('first/topic.dita'))
 
         self.assertFalse(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="inline-image.png"])'))
@@ -398,17 +403,41 @@ class TestDitaCleanupXML(unittest.TestCase):
         </concept>
         '''))
 
-        updated = update_image_paths(xml, Path('images'), Path('topic.dita'))
+        with patch.object(Path, 'exists', return_value=True):
+            updated = update_image_paths(xml, [Path('images')], Path('topic.dita'))
 
         self.assertTrue(updated)
 
-        with contextlib.redirect_stderr(StringIO()) as err:
-            updated = update_image_paths(xml, Path('images'), Path('topic.dita'))
+        with patch.object(Path, 'exists', return_value=True):
+            updated = update_image_paths(xml, [Path('images')], Path('topic.dita'))
 
         self.assertFalse(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p/image[@href="images/inline-image.png"])'))
         self.assertTrue(xml.xpath('boolean(/concept/conbody/fig/image[@href="images/separate-image.png"])'))
-        self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: Already in target path: ')
+
+    def test_update_image_paths_not_found(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <conbody>
+                <p>A paragraph with an <image href="inline-image.png" placement="inline"><alt>inline image</alt></image>.</p>
+                <fig>
+                    <title>Figure title</title>
+                    <image href="separate-image.png" placement="break">
+                        <alt>A separate image</alt>
+                    </image>
+                </fig>
+            </conbody>
+        </concept>
+        '''))
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            with patch.object(Path, 'exists', return_value=False):
+                updated = update_image_paths(xml, [Path('.')], Path('topic.dita'))
+
+        self.assertFalse(updated)
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: Image not found: ')
+
 
     def test_update_xref_targets(self):
         xml = etree.parse(StringIO('''\

@@ -91,8 +91,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         metavar='TARGET',
         help='replace attribute references with reusable content references')
     parser.add_argument('-D', '--images-dir',
-        default=False,
+        default=[],
         metavar='DIRECTORY',
+        action='append',
         help='add a directory path to all image targets')
     parser.add_argument('-X', '--xref-dir',
         default=False,
@@ -139,8 +140,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     if args.xref_dir and not Path(args.xref_dir).is_dir():
         exit_with_error(f"Not a directory: '{args.xref_dir}'", ENOTDIR)
-    if args.images_dir and not Path(args.images_dir).is_dir():
-        exit_with_error(f"Not a directory: '{args.images_dir}'", ENOTDIR)
+    for value in args.images_dir:
+        if not Path(value).is_dir():
+            exit_with_error(f"Not a directory: '{value}'", ENOTDIR)
 
     return args
 
@@ -160,7 +162,7 @@ def process_files(args: argparse.Namespace) -> int:
         if args.conref_target and replace_attributes(xml, args.conref_target.strip()):
             updated = True
 
-        if args.images_dir and update_image_paths(xml, Path(args.images_dir), Path(file_path)):
+        if args.images_dir and update_image_paths(xml, list(map(Path, args.images_dir)), Path(file_path)):
             updated = True
 
         if args.prune_ids and prune_ids(xml):

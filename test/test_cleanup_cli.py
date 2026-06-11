@@ -3,6 +3,7 @@ import contextlib
 import sys
 from errno import ENOENT, ENOTDIR
 from io import StringIO
+from pathlib import Path
 from unittest.mock import patch
 from src.dita.cleanup import cli
 from src.dita.cleanup import NAME, VERSION
@@ -135,14 +136,14 @@ class TestDitaCleanupCli(unittest.TestCase):
             args = cli.parse_args(['-D', '.', 'test_file'])
 
         self.assertEqual(out.getvalue(), '')
-        self.assertEqual(args.images_dir, '.')
+        self.assertEqual(args.images_dir, ['.'])
 
     def test_opt_images_long(self):
         with contextlib.redirect_stdout(StringIO()) as out:
             args = cli.parse_args(['--images-dir', '.', 'test_file'])
 
         self.assertEqual(out.getvalue(), '')
-        self.assertEqual(args.images_dir, '.')
+        self.assertEqual(args.images_dir, ['.'])
 
     def test_opt_images_missing_argument(self):
         with self.assertRaises(SystemExit) as cm,\
@@ -160,6 +161,14 @@ class TestDitaCleanupCli(unittest.TestCase):
 
         self.assertEqual(cm.exception.code, ENOTDIR)
         self.assertRegex(out.getvalue(), rf"Not a directory: 'file.dita'")
+
+    def test_opt_images_multiple(self):
+        with contextlib.redirect_stdout(StringIO()) as out:
+            with patch.object(Path, 'is_dir', return_value=True):
+                args = cli.parse_args(['-D', 'images', '-D', 'icons', 'test_file'])
+
+        self.assertEqual(out.getvalue(), '')
+        self.assertEqual(args.images_dir, ['images', 'icons'])
 
     def test_opt_xref_short(self):
         with contextlib.redirect_stdout(StringIO()) as out:
