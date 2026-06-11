@@ -202,7 +202,8 @@ def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
     for attribute in iter(attribute_references):
         warn(str(file_path) + ": Unresolved attribute reference: " + attribute)
 
-def update_image_paths(xml: etree._ElementTree, images_dir: Path, file_path: Path) -> bool:
+def update_image_paths(xml: etree._ElementTree, images_dir: list[Path], file_path: Path) -> bool:
+    found   = False
     updated = False
 
     for e in xml.iter():
@@ -213,22 +214,28 @@ def update_image_paths(xml: etree._ElementTree, images_dir: Path, file_path: Pat
         if not e.attrib.has_key('href'):
             continue
 
-        f = file_path.resolve()
-        i = images_dir.resolve()
+        i = Path(str(e.attrib['href'])).resolve()
 
-        if i == f.parent:
-            continue
+        for directory in images_dir:
+            f = file_path.resolve()
+            d = directory.resolve()
+            t = d / i.name
+            h = t.relative_to(f.parent, walk_up=True)
 
-        target = str(i.relative_to(f.parent, walk_up=True))
-        href   = str(e.attrib['href'])
+            if not t.exists():
+                continue
 
-        if href.startswith(target + '/'):
-            warn(str(file_path) + ": Already in target path: " + href)
-            continue
+            if str(h) == str(e.attrib['href']):
+                found = True
+                continue
 
-        e.attrib['href'] = target + '/' + href
+            e.attrib['href'] = str(t.relative_to(f.parent, walk_up=True))
 
-        updated = True
+            found   = True
+            updated = True
+
+        if not found:
+            warn(str(file_path) + ": Image not found: " + str(e.attrib['href']))
 
     return updated
 
