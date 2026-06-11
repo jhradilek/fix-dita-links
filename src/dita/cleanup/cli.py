@@ -94,7 +94,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=[],
         metavar='DIRECTORY',
         action='append',
-        help='add a directory path to all image targets')
+        help='update all image paths; can be defined more than once if images are stored in multiple directories')
     parser.add_argument('-X', '--xref-dir',
         default=False,
         metavar='DIRECTORY',
