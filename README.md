@@ -52,7 +52,7 @@ python3 -m pip install --upgrade dita-cleanup
     ```console
     dita-cleanup --verbose *.dita
     ```
-*   Add a directory path to all image references:
+*   Update all image paths:
 
     ```console
     dita-cleanup --images-dir ../images/ *.dita
