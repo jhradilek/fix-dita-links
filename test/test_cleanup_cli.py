@@ -44,11 +44,6 @@ class TestDitaCleanupCli(unittest.TestCase):
         self.assertEqual(args.files[0], 'test_file_one')
         self.assertEqual(args.files[1], 'test_file_two')
 
-    def test_argument_stdin(self):
-        args = cli.parse_args(['-'])
-        self.assertEqual(args.files[0], sys.stdin)
-        self.assertEqual(args.output, sys.stdout)
-
     def test_opt_help_short(self):
         with self.assertRaises(SystemExit) as cm,\
              contextlib.redirect_stdout(StringIO()) as out:

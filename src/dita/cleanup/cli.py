@@ -132,9 +132,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     args = parser.parse_args(argv)
 
-    if args.files[0] == '-':
-        args.files = [sys.stdin]
-        args.output = sys.stdout
     if args.output == '-':
         args.output = sys.stdout
 
