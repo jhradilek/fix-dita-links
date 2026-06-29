@@ -40,7 +40,7 @@ def list_files(directory: str) -> list[Path]:
     result: list[Path] = []
     for root, dirs, files in Path(directory).walk(top_down=True, on_error=print):
         for name in files:
-            if name.endswith('.dita') or name.endswith('.xml'):
+            if name.endswith('.dita'):
                 result.append(Path(root, name))
     return result
 
