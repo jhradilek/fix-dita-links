@@ -169,6 +169,7 @@ def replace_attributes(xml: etree._ElementTree, conref_prefix: str) -> bool:
 def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
     topic_type           = xml.getroot().tag
     attribute_references = set()
+    cross_references     = set()
     short_description    = False
 
     for e in xml.iter():
@@ -177,6 +178,9 @@ def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
 
         if e.tag == 'shortdesc':
             short_description = True
+
+        if e.tag == 'xref' and e.attrib.has_key('href'):
+            cross_references.add(str(e.attrib['href']))
 
         if matches := RE_TEXT_ATTRIBUTE.findall(str(e.text) + str(e.tail)):
             attribute_references.update(set(matches))
@@ -201,6 +205,10 @@ def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
 
     for attribute in iter(attribute_references):
         warn(str(file_path) + ": Unresolved attribute reference: " + attribute)
+
+    if topic_type == 'concept':
+        for cross_reference in iter(cross_references):
+            warn(str(file_path) + ": Link in concept topic: " + cross_reference)
 
 def update_image_paths(xml: etree._ElementTree, images_dir: list[Path], file_path: Path) -> bool:
     found   = False

@@ -241,7 +241,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         messages = err.getvalue().splitlines()
         attributes = [m.split(': ')[3] for m in messages]
 
-        self.assertEqual(len(messages), 6)
+        self.assertEqual(len(messages), 7)
         self.assertTrue('first' in attributes)
         self.assertTrue('second' in attributes)
         self.assertTrue('third' in attributes)
@@ -280,6 +280,28 @@ class TestDitaCleanupXML(unittest.TestCase):
             report_problems(xml, Path('topic.dita'))
 
         self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: Generic topic found')
+
+    def test_report_problems_concept_links(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <shortdesc>A short description.</shortdesc>
+            <conbody>
+                <p><xref href="#topic-id">Internal cross reference</xref></p>
+                <p><xref href="https://example.com/" format="html" scope="external">External link</xref></p>
+            </conbody>
+        </concept>
+        '''))
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            report_problems(xml, Path('topic.dita'))
+
+        messages = err.getvalue().splitlines()
+        links = [m.split(': ', maxsplit=3)[3] for m in messages]
+
+        self.assertEqual(len(messages), 2)
+        self.assertTrue('#topic-id' in links)
+        self.assertTrue('https://example.com/' in links)
 
     def test_update_image_paths(self):
         xml = etree.parse(StringIO('''\
