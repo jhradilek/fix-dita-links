@@ -171,13 +171,15 @@ def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
     attribute_references = set()
     cross_references     = set()
     short_description    = False
+    description_length   = 0
 
     for e in xml.iter():
         if e.tag == etree.Comment:
             continue
 
         if e.tag == 'shortdesc':
-            short_description = True
+            short_description  = True
+            description_length = int(float(str(e.xpath('string-length(.)'))))
 
         if e.tag == 'xref' and e.attrib.has_key('href'):
             cross_references.add(str(e.attrib['href']))
@@ -202,6 +204,10 @@ def report_problems(xml:etree._ElementTree, file_path: Path) -> None:
 
     if not short_description:
         warn(str(file_path) + ": Missing short description")
+    elif description_length < 50:
+        warn(str(file_path) + ": Short description too short: " + str(description_length) + " characters")
+    elif description_length > 300:
+        warn(str(file_path) + ": Short description too long: " + str(description_length) + " characters")
 
     for attribute in iter(attribute_references):
         warn(str(file_path) + ": Unresolved attribute reference: " + attribute)
