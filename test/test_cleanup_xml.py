@@ -224,7 +224,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         xml = etree.parse(StringIO('''\
         <concept id="topic-id-{first}">
             <title>{second} title</title>
-            <shortdesc>A short description.</shortdesc>
+            <shortdesc>A short description that fits in the character length limit.</shortdesc>
             <conbody>
                 <p><b>{second}:</b> {third}</p>
                 <p><ph id="phrase-id-{counter:seq1:A}">A phrase</ph></p>
@@ -266,6 +266,54 @@ class TestDitaCleanupXML(unittest.TestCase):
 
         self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: Missing short description')
 
+    def test_report_problems_short_description_short(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <shortdesc>A short description that is too short.</shortdesc>
+            <conbody>
+                <p>A paragraph.</p>
+            </conbody>
+        </concept>
+        '''))
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            report_problems(xml, Path('topic.dita'))
+
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: Short description too short: 38 characters')
+
+    def test_report_problems_short_description_long(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <shortdesc>A short description that is way too long and exceeds the recommended characters limit. The short description provides a summary of the topic and is mandatory for DITA concepts, references, and tasks. When a short description is too short or too long, it fails to provide the right level of information to the readers.</shortdesc>
+            <conbody>
+                <p>A paragraph.</p>
+            </conbody>
+        </concept>
+        '''))
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            report_problems(xml, Path('topic.dita'))
+
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: Short description too long: 317 characters')
+
+    def test_report_problems_short_description_compound(self):
+        xml = etree.parse(StringIO('''\
+        <concept id="topic-id">
+            <title>Concept title</title>
+            <shortdesc>A short description that is way too long and exceeds the recommended characters limit. The short description provides a summary of the topic and is mandatory for DITA concepts, references, and tasks. The text within other elements, such as <b>bold text</b>, <codeph>code snippets</codeph>, or <filepath>file paths</filepath>, counts towards the character limit.</shortdesc>
+            <conbody>
+                <p>A paragraph.</p>
+            </conbody>
+        </concept>
+        '''))
+
+        with contextlib.redirect_stderr(StringIO()) as err:
+            report_problems(xml, Path('topic.dita'))
+
+        self.assertRegex(err.getvalue(), rf'^{NAME}: topic\.dita: Short description too long: 316 characters')
+
     def test_report_problems_generic_topic(self):
         xml = etree.parse(StringIO('''\
         <topic id="topic-id">
@@ -285,7 +333,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         xml = etree.parse(StringIO('''\
         <concept id="topic-id">
             <title>Concept title</title>
-            <shortdesc>A short description.</shortdesc>
+            <shortdesc>A short description that fits in the character length limit.</shortdesc>
             <conbody>
                 <p><xref href="#topic-id">Internal cross reference</xref></p>
                 <p><xref href="https://example.com/" format="html" scope="external">External link</xref></p>
