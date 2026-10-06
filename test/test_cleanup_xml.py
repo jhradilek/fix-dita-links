@@ -130,9 +130,14 @@ class TestDitaCleanupXML(unittest.TestCase):
         <concept id="topic-id">
             <title>Concept title</title>
             <conbody>
-                <p><xref href="#first-id_{context}">Second reference</xref></p>
-                <p><xref href="#second-id-{context}">Third reference</xref></p>
+                <p><xref href="#first-id_{context}">First reference</xref></p>
+                <p><xref href="#second-id-{context}">Second reference</xref></p>
             </conbody>
+            <related-links>
+                <link href="../../modules/file.dita#third-id_{context}">
+                    <linktext>Third reference</linktext>
+                </link>
+            </related-links>
         </concept>
         '''))
 
@@ -141,6 +146,7 @@ class TestDitaCleanupXML(unittest.TestCase):
         self.assertTrue(updated)
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[1]/xref[@href="#first-id"])'))
         self.assertTrue(xml.xpath('boolean(/concept/conbody/p[2]/xref[@href="#second-id"])'))
+        self.assertTrue(xml.xpath('boolean(/concept/related-links/link[@href="../../modules/file.dita#third-id"])'))
 
     def test_prune_xrefs_no_attributes(self):
         xml = etree.parse(StringIO('''\

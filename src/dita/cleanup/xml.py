@@ -87,7 +87,7 @@ def prune_xrefs(xml: etree._ElementTree) -> bool:
     updated = False
 
     for e in xml.iter():
-        if e.tag != 'xref':
+        if e.tag != 'xref' and e.tag != 'link':
             continue
         if not e.attrib:
             continue
